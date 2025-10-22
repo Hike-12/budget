@@ -30,3 +30,7 @@ a {
   background: var(--color-primary);
   border-radius: 4px;
 }
+select, option {
+  background: var(--color-dark) !important;
+  color: var(--color-accent) !important;
+}

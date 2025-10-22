@@ -9,8 +9,8 @@ export async function GET() {
 
 export async function POST(req) {
   await connectToDB();
-  const { title, amount, type, note } = await req.json();
-  const budget = await Budget.create({ title, amount, type, note });
+  const { title, amount, type, note, category } = await req.json();
+  const budget = await Budget.create({ title, amount, type, note, category });
   return Response.json(budget);
 }
 
@@ -19,4 +19,15 @@ export async function DELETE(req) {
   const { id } = await req.json();
   await Budget.findByIdAndDelete(id);
   return Response.json({ success: true });
+}
+
+export async function PUT(req) {
+  await connectToDB();
+  const { id, title, amount, type, note, category } = await req.json();
+  const budget = await Budget.findByIdAndUpdate(
+    id,
+    { title, amount, type, note, category },
+    { new: true }
+  );
+  return Response.json(budget);
 }

@@ -5,6 +5,7 @@ const BudgetSchema = new mongoose.Schema({
   amount: Number,
   type: { type: String, enum: ["income", "expense"], default: "expense" },
   note: String,
+  category: { type: String, enum: ["school friends", "college friends", "religion", "personal", "miscellaneous"], default: "miscellaneous" },
   createdAt: { type: Date, default: Date.now },
 });
 
