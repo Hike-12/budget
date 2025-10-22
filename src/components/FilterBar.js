@@ -46,7 +46,7 @@ export default function FilterBar({
   for (let y = currentYear; y >= currentYear - 5; y--) years.push(y);
 
   // Check if any filters are active
-  const hasActiveFilters = filterType !== "all" || filterCategory !== "all" || 
+  const hasActiveFilters = filterType !== "all" || filterCategory !== "all" ||
     filterMonth !== "all" || filterYear !== "all" || filterRange !== "all";
 
   const clearFilters = () => {
@@ -85,11 +85,15 @@ export default function FilterBar({
             <button
               key={r.value}
               onClick={() => setFilterRange(r.value)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                filterRange === r.value
-                  ? "bg-secondary text-dark"
-                  : "text-secondary hover:text-accent"
-              }`}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200
+                ${filterRange === r.value
+                  ? "bg-secondary text-dark shadow border border-secondary"
+                  : "text-secondary hover:text-accent bg-transparent border border-transparent"
+                }`}
+              style={{
+                fontWeight: filterRange === r.value ? "600" : "400",
+                outline: filterRange === r.value ? "2px solid #739EC9" : "none"
+              }}
             >
               {r.label}
             </button>

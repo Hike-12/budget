@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [budgets, setBudgets] = useState([]);
   const [editing, setEditing] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   // Filtering & sorting state
   const [filterType, setFilterType] = useState("all");
@@ -36,6 +37,7 @@ export default function Dashboard() {
       body: JSON.stringify(budget),
     });
     fetchBudgets();
+    setShowForm(false);
   }
 
   async function handleDeleteBudget(id) {
@@ -53,6 +55,8 @@ export default function Dashboard() {
       body: JSON.stringify(budget),
     });
     fetchBudgets();
+    setShowForm(false);
+    setEditing(null);
   }
 
   // Filter and sort budgets
@@ -107,6 +111,12 @@ export default function Dashboard() {
     return arr;
   }, [budgets, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange]);
 
+  // Open modal for add/edit
+  function openForm(budget = null) {
+    setEditing(budget);
+    setShowForm(true);
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-2 py-8">
       <TotalBalance budgets={budgets} />
@@ -128,14 +138,13 @@ export default function Dashboard() {
           setFilterRange={setFilterRange}
         />
       </div>
-      <hr className="border-secondary mb-6" />
-      <div className="mb-8">
-        <BudgetForm
-          onAdd={handleAddBudget}
-          onEdit={handleEditBudget}
-          editing={editing}
-          setEditing={setEditing}
-        />
+      <div className="mb-8 flex justify-end">
+        <button
+          onClick={() => openForm()}
+          className="bg-primary text-dark px-6 py-2 rounded-xl font-semibold shadow hover:bg-secondary transition-all"
+        >
+          + Add Transaction
+        </button>
       </div>
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
@@ -150,7 +159,7 @@ export default function Dashboard() {
             key={budget._id}
             budget={budget}
             onDelete={() => setDeleteId(budget._id)}
-            onEdit={setEditing}
+            onEdit={() => openForm(budget)}
           />
         ))}
         {filteredBudgets.length === 0 && (
@@ -179,6 +188,28 @@ export default function Dashboard() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Add/Edit Transaction Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-lg mx-auto">
+            <div className="absolute top-2 right-2 z-10">
+              <button
+                onClick={() => { setShowForm(false); setEditing(null); }}
+                className="bg-dark/70 border border-secondary rounded-full p-2 text-secondary hover:text-accent hover:border-accent transition"
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+            <BudgetForm
+              onAdd={handleAddBudget}
+              onEdit={handleEditBudget}
+              editing={editing}
+              setEditing={setEditing}
+            />
           </div>
         </div>
       )}
