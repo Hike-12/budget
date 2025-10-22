@@ -50,13 +50,13 @@ export default function BudgetCard({ budget, onDelete, onEdit }) {
           >
             <FaEdit />
           </button>
-          <button
-            onClick={() => onDelete(budget._id)}
+        <button
+            onClick={onDelete}
             className="text-red-500 hover:text-red-700 transition text-xs"
             title="Delete"
-          >
+            >
             <FaTrash />
-          </button>
+        </button>
         </div>
       </div>
     </motion.div>

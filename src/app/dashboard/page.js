@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 export default function Dashboard() {
   const [budgets, setBudgets] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [deleteId, setDeleteId] = useState(null); // Modal state
 
   // Filtering & sorting state
   const [filterType, setFilterType] = useState("all");
@@ -39,6 +40,7 @@ export default function Dashboard() {
       method: "DELETE",
       body: JSON.stringify({ id }),
     });
+    setDeleteId(null);
     fetchBudgets();
   }
 
@@ -105,7 +107,7 @@ export default function Dashboard() {
           <BudgetCard
             key={budget._id}
             budget={budget}
-            onDelete={handleDeleteBudget}
+            onDelete={() => setDeleteId(budget._id)}
             onEdit={setEditing}
           />
         ))}
@@ -115,6 +117,29 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      {/* Confirmation Modal */}
+    {deleteId && (
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div className="bg-dark border border-primary rounded-xl p-6 shadow-xl flex flex-col items-center">
+        <span className="text-accent font-grotesk text-lg mb-2">Confirm Delete</span>
+        <span className="text-secondary text-sm mb-4">Are you sure you want to delete this transaction?</span>
+        <div className="flex gap-4">
+            <button
+            onClick={() => handleDeleteBudget(deleteId)}
+            className="bg-red-500 text-dark px-4 py-2 rounded hover:bg-red-700 font-medium"
+            >
+            Delete
+            </button>
+            <button
+            onClick={() => setDeleteId(null)}
+            className="bg-secondary text-dark px-4 py-2 rounded hover:bg-primary font-medium"
+            >
+            Cancel
+            </button>
+        </div>
+        </div>
+    </div>
+    )}
     </div>
   );
 }
