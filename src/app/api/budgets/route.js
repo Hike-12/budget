@@ -9,8 +9,15 @@ export async function GET() {
 
 export async function POST(req) {
   await connectToDB();
-  const { title, amount, type, note, category } = await req.json();
-  const budget = await Budget.create({ title, amount, type, note, category });
+  const { title, amount, type, note, category, createdAt } = await req.json();
+  const budget = await Budget.create({
+    title,
+    amount,
+    type,
+    note,
+    category,
+    createdAt: createdAt ? new Date(createdAt) : undefined,
+  });
   return Response.json(budget);
 }
 
@@ -23,10 +30,17 @@ export async function DELETE(req) {
 
 export async function PUT(req) {
   await connectToDB();
-  const { id, title, amount, type, note, category } = await req.json();
+  const { id, title, amount, type, note, category, createdAt } = await req.json();
   const budget = await Budget.findByIdAndUpdate(
     id,
-    { title, amount, type, note, category },
+    {
+      title,
+      amount,
+      type,
+      note,
+      category,
+      createdAt: createdAt ? new Date(createdAt) : undefined,
+    },
     { new: true }
   );
   return Response.json(budget);

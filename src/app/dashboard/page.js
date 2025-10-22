@@ -9,13 +9,16 @@ import { motion } from "framer-motion";
 export default function Dashboard() {
   const [budgets, setBudgets] = useState([]);
   const [editing, setEditing] = useState(null);
-  const [deleteId, setDeleteId] = useState(null); // Modal state
+  const [deleteId, setDeleteId] = useState(null);
 
   // Filtering & sorting state
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterRange, setFilterRange] = useState("all");
 
   async function fetchBudgets() {
     const res = await fetch("/api/budgets");
@@ -61,6 +64,34 @@ export default function Dashboard() {
     if (filterCategory !== "all") {
       arr = arr.filter(b => b.category === filterCategory);
     }
+    // Filter by month/year
+    if (filterMonth !== "all" || filterYear !== "all") {
+      arr = arr.filter(b => {
+        const d = new Date(b.createdAt);
+        const monthMatch = filterMonth === "all" || d.getMonth() + 1 === Number(filterMonth);
+        const yearMatch = filterYear === "all" || d.getFullYear() === Number(filterYear);
+        return monthMatch && yearMatch;
+      });
+    }
+    // Filter by range
+    if (filterRange !== "all") {
+      const now = new Date();
+      arr = arr.filter(b => {
+        const d = new Date(b.createdAt);
+        if (filterRange === "week") {
+          const weekAgo = new Date(now);
+          weekAgo.setDate(now.getDate() - 7);
+          return d >= weekAgo && d <= now;
+        }
+        if (filterRange === "month") {
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }
+        if (filterRange === "year") {
+          return d.getFullYear() === now.getFullYear();
+        }
+        return true;
+      });
+    }
     arr.sort((a, b) => {
       if (sortBy === "amount") {
         return sortOrder === "asc"
@@ -74,27 +105,38 @@ export default function Dashboard() {
       }
     });
     return arr;
-  }, [budgets, filterType, filterCategory, sortBy, sortOrder]);
+  }, [budgets, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange]);
 
   return (
     <div className="max-w-3xl mx-auto px-2 py-8">
       <TotalBalance budgets={budgets} />
-      <FilterBar
-        filterType={filterType}
-        setFilterType={setFilterType}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        filterCategory={filterCategory}
-        setFilterCategory={setFilterCategory}
-      />
-      <BudgetForm
-        onAdd={handleAddBudget}
-        onEdit={handleEditBudget}
-        editing={editing}
-        setEditing={setEditing}
-      />
+      <div className="mb-6">
+        <FilterBar
+          filterType={filterType}
+          setFilterType={setFilterType}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          filterCategory={filterCategory}
+          setFilterCategory={setFilterCategory}
+          filterMonth={filterMonth}
+          setFilterMonth={setFilterMonth}
+          filterYear={filterYear}
+          setFilterYear={setFilterYear}
+          filterRange={filterRange}
+          setFilterRange={setFilterRange}
+        />
+      </div>
+      <hr className="border-secondary mb-6" />
+      <div className="mb-8">
+        <BudgetForm
+          onAdd={handleAddBudget}
+          onEdit={handleEditBudget}
+          editing={editing}
+          setEditing={setEditing}
+        />
+      </div>
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -118,28 +160,28 @@ export default function Dashboard() {
         )}
       </div>
       {/* Confirmation Modal */}
-    {deleteId && (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <div className="bg-dark border border-primary rounded-xl p-6 shadow-xl flex flex-col items-center">
-        <span className="text-accent font-grotesk text-lg mb-2">Confirm Delete</span>
-        <span className="text-secondary text-sm mb-4">Are you sure you want to delete this transaction?</span>
-        <div className="flex gap-4">
-            <button
-            onClick={() => handleDeleteBudget(deleteId)}
-            className="bg-red-500 text-dark px-4 py-2 rounded hover:bg-red-700 font-medium"
-            >
-            Delete
-            </button>
-            <button
-            onClick={() => setDeleteId(null)}
-            className="bg-secondary text-dark px-4 py-2 rounded hover:bg-primary font-medium"
-            >
-            Cancel
-            </button>
+      {deleteId && (
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+          <div className="bg-dark border border-primary rounded-xl p-6 shadow-xl flex flex-col items-center">
+            <span className="text-accent font-grotesk text-lg mb-2">Confirm Delete</span>
+            <span className="text-secondary text-sm mb-4">Are you sure you want to delete this transaction?</span>
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleDeleteBudget(deleteId)}
+                className="bg-red-500 text-dark px-4 py-2 rounded hover:bg-red-700 font-medium"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteId(null)}
+                className="bg-secondary text-dark px-4 py-2 rounded hover:bg-primary font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-        </div>
-    </div>
-    )}
+      )}
     </div>
   );
 }

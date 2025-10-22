@@ -34,3 +34,7 @@ select, option {
   background: var(--color-dark) !important;
   color: var(--color-accent) !important;
 }
+input[type="date"] {
+  background: var(--color-accent);
+  color: var(--color-dark);
+}
