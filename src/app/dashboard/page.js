@@ -51,7 +51,7 @@ export default function Dashboard() {
 
   async function handleEditBudget(budget) {
     await fetch("/api/budgets", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(budget),
     });
     fetchBudgets();
