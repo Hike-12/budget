@@ -12,6 +12,14 @@ export default function Dashboard() {
   const [deleteId, setDeleteId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    // Only runs on client
+    setUsername(localStorage.getItem("username"));
+  }, []);
+
+
   // Filtering & sorting state
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -22,7 +30,7 @@ export default function Dashboard() {
   const [filterRange, setFilterRange] = useState("all");
 
   async function fetchBudgets() {
-    const res = await fetch("/api/budgets");
+    const res = await fetch(`/api/budgets?user=${username}`);
     const data = await res.json();
     setBudgets(data);
   }
@@ -34,7 +42,8 @@ export default function Dashboard() {
   async function handleAddBudget(budget) {
     await fetch("/api/budgets", {
       method: "POST",
-      body: JSON.stringify(budget),
+      body: JSON.stringify({ ...budget, user: username }),
+      headers: {"Content-Type": "application/json"},  
     });
     fetchBudgets();
     setShowForm(false);
@@ -43,7 +52,8 @@ export default function Dashboard() {
   async function handleDeleteBudget(id) {
     await fetch("/api/budgets", {
       method: "DELETE",
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id, user: username }),
+      headers: {"Content-Type": "application/json"},  
     });
     setDeleteId(null);
     fetchBudgets();
@@ -52,7 +62,8 @@ export default function Dashboard() {
   async function handleEditBudget(budget) {
     await fetch("/api/budgets", {
       method: "PATCH",
-      body: JSON.stringify(budget),
+      body: JSON.stringify({ ...budget, user: username }),
+      headers: {"Content-Type": "application/json"},  
     });
     fetchBudgets();
     setShowForm(false);

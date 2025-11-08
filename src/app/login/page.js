@@ -19,6 +19,7 @@ export default function LoginPage() {
       body: JSON.stringify({ username, password }),
     });
     if (res.ok) {
+      localStorage.setItem("username", username);
       router.push("/dashboard");
     } else {
       setError("Invalid credentials");

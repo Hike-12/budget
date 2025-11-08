@@ -7,6 +7,7 @@ const BudgetSchema = new mongoose.Schema({
   note: String,
   category: { type: String, enum: ["school friends", "college friends", "religion", "personal", "miscellaneous"], default: "miscellaneous" },
   createdAt: { type: Date, default: Date.now },
+  user: String,
 });
 
 export default mongoose.models.Budget || mongoose.model("Budget", BudgetSchema);
