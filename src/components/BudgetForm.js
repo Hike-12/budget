@@ -77,16 +77,6 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           <h3 className="text-accent font-semibold text-lg">
             {editing ? "Edit Transaction" : "New Transaction"}
           </h3>
-          {editing && (
-            <button
-              type="button"
-              onClick={() => setEditing(null)}
-              className="p-2 rounded-lg bg-dark/50 border border-secondary/30 text-secondary hover:text-accent hover:border-accent/50 transition-all duration-200"
-              title="Cancel edit"
-            >
-              <FaTimes />
-            </button>
-          )}
         </div>
 
         {/* Main Grid */}

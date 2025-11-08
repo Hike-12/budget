@@ -193,7 +193,7 @@ export default function Dashboard() {
       )}
       {/* Add/Edit Transaction Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
           <div className="relative w-full max-w-lg mx-auto">
             <div className="absolute top-2 right-2 z-10">
               <button
