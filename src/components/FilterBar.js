@@ -133,7 +133,7 @@ export default function FilterBar({
 
       {/* Expanded Filters */}
       {isExpanded && (
-        <div className="mt-3 p-4 bg-dark/30 border border-secondary/20 rounded-lg">
+        <div className="mt-3 p-4 bg-dark/30 rounded-lg">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {/* Type Filter */}
             <div>

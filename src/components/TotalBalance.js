@@ -15,7 +15,11 @@ export default function TotalBalance({ budgets }) {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3 bg-dark border border-primary rounded-2xl px-6 py-4 mb-8 shadow-lg"
+      className="flex items-center gap-3 bg-dark rounded-2xl px-6 py-4 mb-8 shadow-md"
+      style={{
+        border: "none",
+        boxShadow: "0 2px 12px rgba(86,130,177,0.08)",
+      }}
     >
       <FaWallet className="text-primary text-2xl" />
       <div>
