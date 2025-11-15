@@ -5,9 +5,17 @@ const BudgetSchema = new mongoose.Schema({
   amount: Number,
   type: { type: String, enum: ["income", "expense"], default: "expense" },
   note: String,
-  category: { type: String, enum: ["school friends", "college friends", "religion", "personal", "miscellaneous"], default: "miscellaneous" },
+  category: {
+    type: String,
+    enum: ["school friends", "college friends", "religion", "personal", "miscellaneous"],
+    default: "miscellaneous",
+  },
   createdAt: { type: Date, default: Date.now },
   user: String,
+  // NEW: stable client-generated id from the app
+  clientId: { type: String, index: true, default: null },
 });
+
+BudgetSchema.index({ user: 1, clientId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.models.Budget || mongoose.model("Budget", BudgetSchema);
