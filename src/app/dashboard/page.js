@@ -15,10 +15,8 @@ export default function Dashboard() {
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    // Only runs on client
-    setUsername(localStorage.getItem("username"));
+    setUsername(localStorage.getItem("username") || "");
   }, []);
-
 
   // Filtering & sorting state
   const [filterType, setFilterType] = useState("all");
@@ -30,20 +28,26 @@ export default function Dashboard() {
   const [filterRange, setFilterRange] = useState("all");
 
   async function fetchBudgets() {
-    const res = await fetch(`/api/budgets?user=${username}`);
-    const data = await res.json();
-    setBudgets(data);
+    if (!username) return setBudgets([]);
+    try {
+      const res = await fetch(`/api/budgets?user=${username}`);
+      const data = await res.json();
+      setBudgets(Array.isArray(data) ? data : []);
+    } catch {
+      setBudgets([]);
+    }
   }
 
   useEffect(() => {
     fetchBudgets();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
   async function handleAddBudget(budget) {
     await fetch("/api/budgets", {
       method: "POST",
       body: JSON.stringify({ ...budget, user: username }),
-      headers: {"Content-Type": "application/json"},  
+      headers: { "Content-Type": "application/json" },
     });
     fetchBudgets();
     setShowForm(false);
@@ -53,7 +57,7 @@ export default function Dashboard() {
     await fetch("/api/budgets", {
       method: "DELETE",
       body: JSON.stringify({ id, user: username }),
-      headers: {"Content-Type": "application/json"},  
+      headers: { "Content-Type": "application/json" },
     });
     setDeleteId(null);
     fetchBudgets();
@@ -63,7 +67,7 @@ export default function Dashboard() {
     await fetch("/api/budgets", {
       method: "PATCH",
       body: JSON.stringify({ ...budget, user: username }),
-      headers: {"Content-Type": "application/json"},  
+      headers: { "Content-Type": "application/json" },
     });
     fetchBudgets();
     setShowForm(false);
@@ -72,7 +76,7 @@ export default function Dashboard() {
 
   // Filter and sort budgets
   const filteredBudgets = useMemo(() => {
-    let arr = [...budgets];
+    let arr = Array.isArray(budgets) ? [...budgets] : [];
     if (filterType !== "all") {
       arr = arr.filter(b => b.type === filterType);
     }
@@ -122,7 +126,6 @@ export default function Dashboard() {
     return arr;
   }, [budgets, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange]);
 
-  // Open modal for add/edit
   function openForm(budget = null) {
     setEditing(budget);
     setShowForm(true);
