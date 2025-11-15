@@ -1,5 +1,6 @@
 import { connectToDB } from "@/lib/mongodb";
 import Budget from "@/lib/Budget";
+import TrashBudget from "@/lib/TrashBudget";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,20 +67,23 @@ export async function DELETE(req) {
   const { id, clientId, user } = await req.json();
   if (!user) return Response.json({ error: "User required" }, { status: 400, headers: corsHeaders });
 
-  // Try by _id first, then by clientId (for offline-added docs)
-  let res = { deletedCount: 0 };
+  // Find the budget to delete
+  let budget = null;
   if (id) {
-    res = await Budget.deleteOne({ _id: id, user });
-    if (res.deletedCount === 0) {
-      res = await Budget.deleteOne({ clientId: id, user });
-    }
+    budget = await Budget.findOne({ _id: id, user });
+    if (!budget) budget = await Budget.findOne({ clientId: id, user });
   } else if (clientId) {
-    res = await Budget.deleteOne({ clientId, user });
-  } else {
-    return Response.json({ error: "id or clientId required" }, { status: 400, headers: corsHeaders });
+    budget = await Budget.findOne({ clientId, user });
   }
 
-  return Response.json({ success: true, deleted: res.deletedCount }, { headers: corsHeaders });
+  if (budget) {
+    // Move to trash before deleting
+    await TrashBudget.create({ ...budget.toObject(), deletedAt: new Date() });
+    await budget.deleteOne();
+    return Response.json({ success: true, trashed: true }, { headers: corsHeaders });
+  }
+
+  return Response.json({ error: "Not found" }, { status: 404, headers: corsHeaders });
 }
 
 export async function OPTIONS() {
