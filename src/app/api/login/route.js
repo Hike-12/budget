@@ -15,6 +15,9 @@ export async function POST(req) {
   if (username === LOGIN_USERNAME2 && password === LOGIN_PASSWORD2) {
     return Response.json({ success: true });
   }
+    if (username === LOGIN_USERNAME3 && password === LOGIN_PASSWORD3) {
+    return Response.json({ success: true });
+  }
   return Response.json({ success: false }, { status: 401 });
 }
 
