@@ -58,9 +58,9 @@ function EmptyState({ onAdd }) {
         <div className="w-12 h-12 rounded-lg bg-white/4 border border-white/8 flex items-center justify-center mx-auto mb-4">
           <FiInbox className="text-secondary/40 text-xl" strokeWidth={1.5} />
         </div>
-        <h3 className="font-grotesk text-accent font-semibold text-base mb-2 tracking-tight">No transactions yet</h3>
+        <h3 className="font-grotesk text-accent font-semibold text-lg mb-1 tracking-tight">Your canvas is clear</h3>
         <p className="text-secondary/40 text-sm mb-6 max-w-xs mx-auto leading-relaxed">
-          Start tracking your money — add your first income or expense.
+          Start your financial story. Add your first income or expense tracking now!
         </p>
         <button
           onClick={onAdd}
@@ -86,10 +86,14 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 140, damping: 22, delay: index * 0.03 }}
-      className="group flex items-center gap-4 bg-[#0a0a0a] border border-white/6 rounded-lg px-4 py-3 hover:border-white/12 transition-all duration-150"
+      layout
+      initial={{ opacity: 0, y: -4, scale: 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 350, damping: 26, delay: index * 0.02 }}
+      whileHover={{ scale: 1.005, backgroundColor: "rgba(255,255,255,0.02)" }}
+      whileTap={{ scale: 0.99 }}
+      className="group flex items-center gap-4 bg-[#0a0a0a] border border-white/6 rounded-lg px-4 py-3 hover:border-white/12 transition-all duration-150 will-change-transform"
     >
       {/* Indicator */}
       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: accentColor, opacity: 0.7 }} />
@@ -313,7 +317,8 @@ export default function Dashboard() {
         <button
           id="add-transaction-btn"
           onClick={() => openForm()}
-          className="flex flex-[0_0_auto] items-center justify-center gap-2 px-4 py-3 sm:py-2.5 w-full sm:w-auto bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-[0.97]"
+          className="flex flex-[0_0_auto] items-center justify-center gap-2 px-4 py-3 sm:py-2.5 w-full sm:w-auto bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-95"
+          aria-label="Add new transaction"
         >
           <FiPlus strokeWidth={2.5} className="text-sm" />
           Add

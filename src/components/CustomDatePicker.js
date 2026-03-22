@@ -50,10 +50,12 @@ export default function CustomDatePicker({ value, onChange, className = "" }) {
     <div className={`relative ${className}`} ref={containerRef}>
       <button
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200"
+        className="w-full flex items-center gap-2 bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
       >
-        <FiCalendar className="text-secondary/40 text-[13px]" />
+        <FiCalendar className="text-secondary/40 text-[13px]" aria-hidden="true" />
         <span className={value ? "text-accent" : "text-secondary/30"}>{displayDateStr}</span>
       </button>
 
@@ -65,6 +67,8 @@ export default function CustomDatePicker({ value, onChange, className = "" }) {
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="absolute z-[999] mt-1.5 p-3 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl w-[260px]"
+            role="dialog"
+            aria-label="Calendar component"
             // Prevent close on internal clicks
             onClick={(e) => e.stopPropagation()}
           >
@@ -117,6 +121,8 @@ export default function CustomDatePicker({ value, onChange, className = "" }) {
                   <button
                     key={d}
                     type="button"
+                    aria-label={`${d} ${currentMonthName} ${currentYear}`}
+                    aria-pressed={isSelected}
                     onClick={() => { onChange(dateStr); setIsOpen(false); }}
                     className={`w-7 h-7 flex items-center justify-center rounded-md text-xs transition-all duration-150 ${
                       isSelected

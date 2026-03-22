@@ -23,8 +23,10 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
     <div className={`relative ${className}`} ref={containerRef}>
       <button
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200"
+        className="w-full flex items-center justify-between bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
       >
         <span className={selectedOption ? "text-accent" : "text-secondary/25"}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -42,6 +44,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="absolute z-[999] w-full mt-1.5 p-1 bg-[#0a0a0a] border border-white/10 rounded-lg shadow-2xl overflow-hidden"
+            role="listbox"
           >
             <div className="max-h-60 overflow-y-auto thin-scrollbar">
               {options.map((opt) => {
@@ -49,6 +52,8 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
                 return (
                   <button
                     key={opt.value}
+                    role="option"
+                    aria-selected={isSelected}
                     type="button"
                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
                     className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors duration-150 ${

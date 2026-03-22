@@ -46,14 +46,18 @@ export function Toaster({ position = "top-right" }) {
 
   return (
     <div className={`fixed z-[9999] flex flex-col gap-2 pointer-events-none ${posClasses[position]}`}>
-      <AnimatePresence>
+      <AnimatePresence mode="popLayout">
         {toasts.map((t) => (
           <motion.div
+            layout
             key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            initial={{ opacity: 0, y: -24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 min-w-[300px] max-w-sm rounded-xl shadow-2xl border backdrop-blur-md transition-all ${
+            exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15, ease: "easeIn" } }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            role={t.type === "error" ? "alert" : "status"}
+            aria-live={t.type === "error" ? "assertive" : "polite"}
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3.5 min-w-[300px] max-w-sm rounded-[14px] shadow-2xl border backdrop-blur-md transition-all ${
               t.type === "success"
                 ? "bg-[#0a0a0a]/90 border-emerald-500/20 shadow-emerald-500/10"
                 : t.type === "error"
@@ -61,9 +65,9 @@ export function Toaster({ position = "top-right" }) {
                 : "bg-[#0a0a0a]/90 border-white/10"
             }`}
           >
-            {t.type === "success" && <FiCheckCircle className="text-emerald-400 text-lg flex-shrink-0" />}
-            {t.type === "error" && <FiXCircle className="text-red-400 text-lg flex-shrink-0" />}
-            {t.type === "info" && <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
+            {t.type === "success" && <FiCheckCircle className="text-emerald-400 text-lg flex-shrink-0" aria-hidden="true" />}
+            {t.type === "error" && <FiXCircle className="text-red-400 text-lg flex-shrink-0" aria-hidden="true" />}
+            {t.type === "info" && <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" aria-hidden="true" />}
             <span className="text-sm font-medium text-accent">{t.message}</span>
           </motion.div>
         ))}

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
 :root {
   --color-dark: #000000;
   --color-primary: #5682B1;
@@ -68,9 +73,29 @@ textarea {
 }
 
 input:focus, textarea:focus {
-  border-color: rgba(86, 130, 177, 0.4) !important;
-  box-shadow: 0 0 0 2px rgba(86, 130, 177, 0.05);
+  border-color: rgba(86, 130, 177, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(86, 130, 177, 0.15);
   outline: none;
+}
+
+/* ── Global high-visibility focus for accessibility ── */
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* ── Global Mouse Cursor Fix ── */
+button,
+[role="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+label {
+  cursor: pointer;
 }
 
 /* ── Global select / option fix ── */

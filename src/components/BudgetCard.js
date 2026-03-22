@@ -14,11 +14,14 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 120, damping: 22, delay: index * 0.04 }}
-      whileHover={{ y: -1 }}
-      className="group relative h-full"
+      layout
+      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 350, damping: 26, delay: index * 0.025 }}
+      whileHover={{ y: -4, scale: 1.015, boxShadow: `0 12px 24px -10px ${accentBorder}` }}
+      whileTap={{ scale: 0.98, y: 0 }}
+      className="group relative h-full will-change-transform"
     >
       <div
         className="relative bg-[#0a0a0a] border rounded-xl p-4 flex flex-col h-full transition-all duration-200"
