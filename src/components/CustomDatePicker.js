@@ -53,7 +53,7 @@ export default function CustomDatePicker({ value, onChange, className = "" }) {
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+        className="w-full h-10 flex items-center gap-2 bg-[#0e0e0e] border border-white/8 rounded-[10px] px-4 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200"
       >
         <FiCalendar className="text-secondary/40 text-[13px]" aria-hidden="true" />
         <span className={value ? "text-accent" : "text-secondary/30"}>{displayDateStr}</span>
@@ -66,7 +66,7 @@ export default function CustomDatePicker({ value, onChange, className = "" }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute z-[999] mt-1.5 p-3 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl w-[260px]"
+            className="absolute z-[999] right-0 mt-2 p-4 bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_20px_40px_-12px_rgba(0,0,0,1),inset_0_1px_1px_rgba(255,255,255,0.05)] w-[280px]"
             role="dialog"
             aria-label="Calendar component"
             // Prevent close on internal clicks

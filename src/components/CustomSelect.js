@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
 
-export default function CustomSelect({ value, onChange, options, placeholder = "Select...", className = "" }) {
+export default function CustomSelect({ value, onChange, options, placeholder = "Select...", className = "", buttonClassName = "" }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -26,7 +26,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+        className={`w-full flex items-center justify-between bg-[#0e0e0e] border border-white/8 rounded-lg px-4 h-10 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 ${buttonClassName}`}
       >
         <span className={selectedOption ? "text-accent" : "text-secondary/25"}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -43,10 +43,10 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute z-[999] w-full mt-1.5 p-1 bg-[#0a0a0a] border border-white/10 rounded-lg shadow-2xl overflow-hidden"
+            className="absolute z-[999] min-w-full w-max mt-2 p-2 bg-[#0a0a0a]/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_20px_40px_-12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.05)] overflow-hidden"
             role="listbox"
           >
-            <div className="max-h-60 overflow-y-auto thin-scrollbar">
+            <div className="max-h-60 overflow-y-auto thin-scrollbar p-0.5 space-y-1">
               {options.map((opt) => {
                 const isSelected = value === opt.value;
                 return (
@@ -56,9 +56,9 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
                     aria-selected={isSelected}
                     type="button"
                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors duration-150 ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm rounded-xl transition-colors duration-150 ${
                       isSelected
-                        ? "bg-white/10 text-accent font-medium"
+                        ? "bg-white/10 text-accent font-semibold"
                         : "text-secondary/60 hover:bg-white/5 hover:text-accent"
                     }`}
                   >
