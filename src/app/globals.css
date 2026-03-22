@@ -30,10 +30,18 @@ a {
   background: var(--color-primary);
   border-radius: 4px;
 }
-select, option {
-  background: var(--color-dark) !important;
-  color: var(--color-accent) !important;
+
+/* ── Global select / option fix ── */
+select {
+  background-color: #0e0e0e;
+  color: var(--color-accent);
+  border-color: rgba(255,255,255,0.1);
 }
+select option {
+  background-color: #0e0e0e;
+  color: var(--color-accent);
+}
+
 input[type="date"] {
   background: var(--color-accent);
   color: var(--color-dark);

@@ -14,7 +14,7 @@ export default function Home() {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-60"
+          className="object-cover opacity-30"
         />
         <div className="absolute inset-0 bg-dark/40" />
       </div>

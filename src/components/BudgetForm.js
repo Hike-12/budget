@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FaPlus, FaSave, FaTimes, FaCalendarAlt, FaTag, FaStickyNote } from "react-icons/fa";
+import { FiPlus, FiSave, FiTag, FiFileText, FiAlignLeft, FiHash } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const categories = [
   "school friends",
@@ -10,16 +11,17 @@ const categories = [
   "miscellaneous",
 ];
 
+const inputCls =
+  "w-full bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 placeholder:text-secondary/25";
+
 export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState("expense");
-  const [note, setNote] = useState("");
+  const [title,    setTitle]    = useState("");
+  const [amount,   setAmount]   = useState("");
+  const [type,     setType]     = useState("expense");
+  const [note,     setNote]     = useState("");
   const [category, setCategory] = useState("miscellaneous");
-  const [date, setDate] = useState(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  });
+  const [date,     setDate]     = useState(() => new Date().toISOString().slice(0, 10));
+  const [errors,   setErrors]   = useState({});
 
   useEffect(() => {
     if (editing) {
@@ -28,173 +30,159 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
       setType(editing.type);
       setNote(editing.note || "");
       setCategory(editing.category || "miscellaneous");
-      setDate(editing.createdAt ? new Date(editing.createdAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+      setDate(editing.createdAt
+        ? new Date(editing.createdAt).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10));
     } else {
-      setTitle("");
-      setAmount("");
-      setType("expense");
-      setNote("");
-      setCategory("miscellaneous");
+      setTitle(""); setAmount(""); setType("expense");
+      setNote(""); setCategory("miscellaneous");
       setDate(new Date().toISOString().slice(0, 10));
     }
+    setErrors({});
   }, [editing]);
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!title || !amount) return;
-    const payload = {
-      title,
-      amount: Number(amount),
-      type,
-      note,
-      category,
-      createdAt: new Date(date),
-    };
-    if (editing) {
-      onEdit({ id: editing._id, ...payload });
-      setEditing(null);
-    } else {
-      onAdd(payload);
-    }
-    setTitle("");
-    setAmount("");
-    setType("expense");
-    setNote("");
-    setCategory("miscellaneous");
+  function validate() {
+    const e = {};
+    if (!title.trim())           e.title  = "Title is required";
+    if (!amount || Number(amount) <= 0) e.amount = "Enter a valid amount";
+    return e;
+  }
+
+  function handleSubmit(evt) {
+    evt.preventDefault();
+    const e = validate();
+    if (Object.keys(e).length) { setErrors(e); return; }
+    const payload = { title: title.trim(), amount: Number(amount), type, note, category, createdAt: new Date(date) };
+    if (editing) { onEdit({ id: editing._id, ...payload }); setEditing(null); }
+    else onAdd(payload);
+    setTitle(""); setAmount(""); setType("expense"); setNote(""); setCategory("miscellaneous");
     setDate(new Date().toISOString().slice(0, 10));
+    setErrors({});
   }
 
   return (
-    <div className="relative">
-      {/* Glassmorphic container with gradient border */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 rounded-2xl blur-xl opacity-60"></div>
-      
-      <div
-        className="relative bg-dark/80 backdrop-blur-sm border border-secondary/30 rounded-2xl p-6 shadow-2xl transition-all duration-300 hover:border-secondary/50"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-accent font-semibold text-lg">
-            {editing ? "Edit Transaction" : "New Transaction"}
-          </h3>
+    <div className="bg-[#080808] border border-white/10 rounded-xl p-6">
+      {/* Header */}
+      <h3 className="font-grotesk text-accent font-semibold text-base tracking-tight mb-5">
+        {editing ? "Edit transaction" : "New transaction"}
+      </h3>
+
+      <form onSubmit={handleSubmit} noValidate>
+        {/* Type toggle */}
+        <div className="flex gap-1.5 mb-5 p-1 bg-white/3 border border-white/8 rounded-lg">
+          <button
+            type="button"
+            onClick={() => setType("expense")}
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+              type === "expense"
+                ? "bg-red-500/12 text-red-400 border border-red-500/20"
+                : "text-secondary/40 hover:text-accent border border-transparent"
+            }`}
+          >
+            Expense
+          </button>
+          <button
+            type="button"
+            onClick={() => setType("income")}
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+              type === "income"
+                ? "bg-emerald-500/12 text-emerald-400 border border-emerald-500/20"
+                : "text-secondary/40 hover:text-accent border border-transparent"
+            }`}
+          >
+            Income
+          </button>
         </div>
 
-        {/* Main Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Title Input */}
-          <div className="relative group">
-            <label className="block text-secondary text-xs font-medium mb-2 ml-1">
-              Title
+          {/* Title */}
+          <div>
+            <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+              <FiAlignLeft strokeWidth={2} className="text-[10px]" /> Title
             </label>
             <input
               type="text"
-              placeholder="Enter title"
-              className="w-full bg-dark/50 border border-secondary/30 rounded-xl px-4 py-3 text-accent text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-secondary/50"
+              placeholder="e.g. Chai with friends"
+              className={`${inputCls} ${errors.title ? "border-red-500/40" : ""}`}
               value={title}
-              onChange={e => setTitle(e.target.value)}
-              required
+              onChange={e => { setTitle(e.target.value); errors.title && setErrors(p => ({ ...p, title: null })); }}
             />
+            <AnimatePresence>
+              {errors.title && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="text-red-400/80 text-xs mt-1 ml-0.5">{errors.title}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Amount Input */}
-          <div className="relative group">
-            <label className="block text-secondary text-xs font-medium mb-2 ml-1">
-              Amount
+          {/* Amount */}
+          <div>
+            <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+              <FiHash strokeWidth={2} className="text-[10px]" /> Amount
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary">₹</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary/30 text-sm pointer-events-none">₹</span>
               <input
                 type="number"
-                placeholder="0.00"
-                className="w-full bg-dark/50 border border-secondary/30 rounded-xl pl-8 pr-4 py-3 text-accent text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-secondary/50"
+                placeholder="0"
+                className={`${inputCls} pl-8 tabular-nums ${errors.amount ? "border-red-500/40" : ""}`}
                 value={amount}
-                onChange={e => setAmount(e.target.value)}
-                required
-                min={0}
+                onChange={e => { setAmount(e.target.value); errors.amount && setErrors(p => ({ ...p, amount: null })); }}
+                min="0" step="0.01"
               />
             </div>
+            <AnimatePresence>
+              {errors.amount && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="text-red-400/80 text-xs mt-1 ml-0.5">{errors.amount}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Type Selector */}
-          <div className="relative group">
-            <label className="block text-secondary text-xs font-medium mb-2 ml-1">
-              Type
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setType("expense")}
-                className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
-                  type === "expense"
-                    ? "bg-gradient-to-r from-red-500/20 to-red-600/20 border-2 border-red-500/50 text-red-400"
-                    : "bg-dark/50 border border-secondary/30 text-secondary hover:border-secondary/50"
-                }`}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                onClick={() => setType("income")}
-                className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
-                  type === "income"
-                    ? "bg-gradient-to-r from-green-500/20 to-green-600/20 border-2 border-green-500/50 text-green-400"
-                    : "bg-dark/50 border border-secondary/30 text-secondary hover:border-secondary/50"
-                }`}
-              >
-                Income
-              </button>
-            </div>
-          </div>
-
-          {/* Category Selector */}
-          <div className="relative group">
-            <label className="block text-secondary text-xs font-medium mb-2 ml-1 flex items-center gap-1">
-              <FaTag className="text-xs" />
-              Category
+          {/* Category */}
+          <div>
+            <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+              <FiTag strokeWidth={2} className="text-[10px]" /> Category
             </label>
             <select
-              className="w-full bg-dark/50 border border-secondary/30 rounded-xl px-4 py-3 text-accent text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer"
+              className={inputCls}
               value={category}
               onChange={e => setCategory(e.target.value)}
               style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 0.75rem center',
-                backgroundSize: '1.25rem'
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23739EC9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center",
+                backgroundSize: "1rem", paddingRight: "2.5rem",
               }}
             >
               {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
+                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
               ))}
             </select>
           </div>
 
-          {/* Date Input */}
-          <div className="relative group">
-            <label className="block text-secondary text-xs font-medium mb-2 ml-1 flex items-center gap-1">
-              <FaCalendarAlt className="text-xs" />
-              Date
-            </label>
+          {/* Date */}
+          <div>
+            <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Date</label>
             <input
               type="date"
-              className="w-full bg-dark/50 border border-secondary/30 rounded-xl px-4 py-3 text-accent text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+              className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 cursor-pointer"
+              style={{ background: "var(--color-accent)", color: "var(--color-dark)", border: "1px solid rgba(255,255,255,0.08)" }}
               value={date}
               onChange={e => setDate(e.target.value)}
-              required
             />
           </div>
 
-          {/* Note Input - Full Width */}
-          <div className="relative group md:col-span-2">
-            <label className="block text-secondary text-xs font-medium mb-2 ml-1 flex items-center gap-1">
-              <FaStickyNote className="text-xs" />
-              Note (Optional)
+          {/* Note */}
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+              <FiFileText strokeWidth={2} className="text-[10px]" /> Note
+              <span className="text-white/15 normal-case tracking-normal font-normal">(optional)</span>
             </label>
             <textarea
-              placeholder="Add a note..."
-              className="w-full bg-dark/50 border border-secondary/30 rounded-xl px-4 py-3 text-accent text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-secondary/50 resize-none"
+              placeholder="Add context…"
+              className={`${inputCls} resize-none`}
               value={note}
               onChange={e => setNote(e.target.value)}
               rows={2}
@@ -202,20 +190,15 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
-          type="button"
-          onClick={handleSubmit}
-          className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg ${
-            editing
-              ? "bg-gradient-to-r from-primary to-primary/80 text-dark hover:shadow-primary/50"
-              : "bg-gradient-to-r from-secondary to-secondary/80 text-dark hover:shadow-secondary/50"
-          }`}
+          type="submit"
+          className="w-full py-3 rounded-lg bg-primary text-dark font-semibold text-sm hover:bg-secondary transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          {editing ? <FaSave className="text-base" /> : <FaPlus className="text-base" />}
-          {editing ? "Save Changes" : "Add Transaction"}
+          {editing ? <FiSave strokeWidth={2} /> : <FiPlus strokeWidth={2.5} />}
+          {editing ? "Save changes" : "Add transaction"}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
