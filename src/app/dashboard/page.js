@@ -132,40 +132,42 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-2 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pt-28">
       <TotalBalance budgets={budgets} />
-      <div className="mb-6">
-        <FilterBar
-          filterType={filterType}
-          setFilterType={setFilterType}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          filterCategory={filterCategory}
-          setFilterCategory={setFilterCategory}
-          filterMonth={filterMonth}
-          setFilterMonth={setFilterMonth}
-          filterYear={filterYear}
-          setFilterYear={setFilterYear}
-          filterRange={filterRange}
-          setFilterRange={setFilterRange}
-        />
-      </div>
-      <div className="mb-8 flex justify-end">
-        <button
-          onClick={() => openForm()}
-          className="bg-primary text-dark px-6 py-2 rounded-xl font-semibold shadow hover:bg-secondary transition-all"
-        >
-          + Add Transaction
-        </button>
+      <div className="mb-8 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+        <div className="flex-1 w-full">
+          <FilterBar
+            filterType={filterType}
+            setFilterType={setFilterType}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            filterMonth={filterMonth}
+            setFilterMonth={setFilterMonth}
+            filterYear={filterYear}
+            setFilterYear={setFilterYear}
+            filterRange={filterRange}
+            setFilterRange={setFilterRange}
+          />
+        </div>
+        <div className="flex-none">
+          <button
+            onClick={() => openForm()}
+            className="w-full lg:w-auto bg-primary text-dark px-8 py-3.5 rounded-full font-bold shadow-[0_0_20px_rgba(86,130,177,0.3)] hover:scale-105 hover:bg-secondary transition-all flex items-center justify-center gap-2"
+          >
+            <span className="text-xl leading-none">+</span> Add Transaction
+          </button>
+        </div>
       </div>
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="font-grotesk text-lg text-accent mt-6 mb-3 font-normal"
+        className="font-grotesk text-2xl text-accent mt-10 mb-6 font-bold tracking-tight"
       >
-        Transactions
+        Recent Transactions
       </motion.h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {filteredBudgets.map(budget => (
