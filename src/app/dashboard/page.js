@@ -285,7 +285,7 @@ export default function Dashboard() {
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           <span className="text-primary/80 text-[10px] font-semibold uppercase tracking-[0.15em]">Overview</span>
         </div>
-        <h1 className="font-grotesk text-3xl font-bold text-accent tracking-tight">
+        <h1 className="font-grotesk text-3xl font-semibold text-accent tracking-tight">
           Your finances{greetingName}
         </h1>
       </motion.div>

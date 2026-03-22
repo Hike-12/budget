@@ -3,16 +3,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FaArrowRight } from "react-icons/fa";
+import bgDecor from "../../public/img2.jpg";
 
 export default function Home() {
   return (
     <div className="h-screen overflow-hidden flex flex-col justify-center items-center relative">
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/img2.jpg" 
+          src={bgDecor} 
           alt="Abstract Finance Background"
           fill
           priority
+          placeholder="blur"
+          fetchPriority="high"
           sizes="100vw"
           className="object-cover opacity-30"
         />
@@ -30,7 +33,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-5xl md:text-7xl font-grotesk font-bold text-accent mb-6 leading-tight tracking-tight relative"
+          className="text-5xl md:text-7xl font-grotesk font-semibold text-accent mb-6 leading-tight tracking-tight relative"
         >
           Master your money,<br/>
           <span className="bg-clip-text bg-gradient-to-r from-primary to-secondary">

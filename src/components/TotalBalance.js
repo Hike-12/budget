@@ -24,7 +24,7 @@ export default function TotalBalance({ budgets }) {
           <div>
             <p className="text-secondary/50 text-[10px] font-semibold uppercase tracking-[0.15em] mb-1">Net Balance</p>
             <div
-              className="font-grotesk font-bold tabular-nums leading-none"
+              className="font-grotesk font-semibold tabular-nums leading-none"
               style={{
                 fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
                 color: total >= 0 ? "var(--color-accent)" : "#f87171",
