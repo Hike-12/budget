@@ -78,7 +78,7 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
             <FiCalendar strokeWidth={1.5} className="text-[10px]" />
             {dateStr}
           </span>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200">
+          <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 translate-x-0 sm:translate-x-2 sm:group-hover:translate-x-0 transition-all duration-200">
             <button
               onClick={() => onEdit(budget)}
               className="w-7 h-7 rounded-lg bg-white/4 flex items-center justify-center text-secondary/50 hover:text-primary hover:bg-primary/10 transition-all duration-150 active:scale-95"

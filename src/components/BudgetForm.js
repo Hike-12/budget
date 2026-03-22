@@ -63,9 +63,9 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
   }
 
   return (
-    <div className="bg-[#080808] border border-white/10 rounded-xl p-6">
+    <div className="bg-[#080808] border border-white/10 rounded-xl p-5 sm:p-7 md:p-8">
       {/* Header */}
-      <h3 className="font-grotesk text-accent font-semibold text-base tracking-tight mb-5">
+      <h3 className="font-grotesk text-accent font-semibold text-lg tracking-tight mb-5 sm:mb-6">
         {editing ? "Edit transaction" : "New transaction"}
       </h3>
 
@@ -96,7 +96,7 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-5 sm:mb-6">
           {/* Title */}
           <div>
             <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
@@ -165,7 +165,7 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           </div>
 
           {/* Note */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
               <FiFileText strokeWidth={2} className="text-[10px]" /> Note
               <span className="text-white/15 normal-case tracking-normal font-normal">(optional)</span>

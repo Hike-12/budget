@@ -171,7 +171,7 @@ export default function Dashboard() {
   useEffect(() => { fetchBudgets(); }, [username]);
 
   async function handleAddBudget(budget) {
-    await fetch("/api/budgets", {
+    const res = await fetch("/api/budgets", {
       method: "POST",
       body: JSON.stringify({ ...budget, user: username }),
       headers: { "Content-Type": "application/json" },
@@ -313,7 +313,7 @@ export default function Dashboard() {
         <button
           id="add-transaction-btn"
           onClick={() => openForm()}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-[0.97] flex-shrink-0"
+          className="flex flex-[0_0_auto] items-center justify-center gap-2 px-4 py-3 sm:py-2.5 w-full sm:w-auto bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-[0.97]"
         >
           <FiPlus strokeWidth={2.5} className="text-sm" />
           Add
@@ -336,21 +336,40 @@ export default function Dashboard() {
 
         {/* Grid / List view toggle */}
         <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1">
-          {GRID_OPTIONS.map(opt => (
-            <button
-              key={opt.cols}
-              onClick={() => setGridCols(opt.cols)}
-              title={opt.label}
-              aria-label={opt.label}
-              className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 ${
-                gridCols === opt.cols
-                  ? "bg-white/8 text-accent"
-                  : "text-secondary/35 hover:text-accent"
-              }`}
-            >
-              {opt.icon}
-            </button>
-          ))}
+          {/* Universal Mobile Grid Button (hidden on desktop) */}
+          <button
+            onClick={() => setGridCols(typeof gridCols === "number" ? gridCols : 3)}
+            title="Grid view"
+            aria-label="Grid view"
+            className={`w-7 h-7 flex sm:hidden items-center justify-center rounded-md transition-all duration-150 ${
+              typeof gridCols === "number" ? "bg-white/8 text-accent" : "text-secondary/35 hover:text-accent"
+            }`}
+          >
+            <FiGrid strokeWidth={1.5} size={13} />
+          </button>
+
+          {/* Individual Opts */}
+          {GRID_OPTIONS.map(opt => {
+            // 'List' shows everywhere. Multi-col + 1-col show ONLY on sm+
+            const isDesktopOnly = opt.cols !== "list";
+            return (
+              <button
+                key={opt.cols}
+                onClick={() => setGridCols(opt.cols)}
+                title={opt.label}
+                aria-label={opt.label}
+                className={`w-7 h-7 items-center justify-center rounded-md transition-all duration-150 ${
+                  isDesktopOnly ? "hidden sm:flex" : "flex"
+                } ${
+                  gridCols === opt.cols
+                    ? "bg-white/8 text-accent"
+                    : "text-secondary/35 hover:text-accent"
+                }`}
+              >
+                {opt.icon}
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 
@@ -432,11 +451,11 @@ export default function Dashboard() {
       <AnimatePresence>
         {showForm && (
           <ModalBackdrop onClose={closeForm}>
-            <div className="max-w-lg mx-auto relative">
+            <div className="w-full max-w-[540px] mx-auto relative">
               {/* Floating close button */}
               <button
                 onClick={closeForm}
-                className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-lg bg-[#111] border border-white/10 flex items-center justify-center text-secondary/50 hover:text-accent hover:border-white/20 transition-all duration-150 shadow-lg"
+                className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 z-20 w-8 h-8 rounded-lg bg-[#111] border border-white/10 flex items-center justify-center text-secondary/50 hover:text-accent hover:border-white/20 transition-all duration-150 shadow-lg"
                 aria-label="Close form"
               >
                 <FiX strokeWidth={2} className="text-sm" />

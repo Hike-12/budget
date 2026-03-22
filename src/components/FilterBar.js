@@ -187,7 +187,7 @@ export default function FilterBar({
             className="overflow-visible"
           >
             <div className="bg-[#0a0a0a] border border-white/8 rounded-lg p-4 relative z-[30]">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Category</label>
                   <CustomSelect 
