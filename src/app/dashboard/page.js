@@ -5,6 +5,7 @@ import BudgetForm from "@/components/BudgetForm";
 import TotalBalance from "@/components/TotalBalance";
 import FilterBar from "@/components/FilterBar";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "@/components/sonner";
 import {
   FiPlus, FiInbox, FiAlertTriangle, FiX,
   FiList, FiGrid,
@@ -140,7 +141,7 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
 export default function Dashboard() {
   const [budgets,  setBudgets]  = useState([]);
   const [editing,  setEditing]  = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [username, setUsername] = useState("");
 
@@ -175,24 +176,36 @@ export default function Dashboard() {
       body: JSON.stringify({ ...budget, user: username }),
       headers: { "Content-Type": "application/json" },
     });
+    
+    if (res.ok) toast.success(`Added "${budget.title}" successfully`);
+    else toast.error("Failed to add transaction");
+    
     fetchBudgets(); setShowForm(false);
   }
 
-  async function handleDeleteBudget(id) {
-    await fetch("/api/budgets", {
+  async function handleDeleteBudget(item) {
+    const res = await fetch("/api/budgets", {
       method: "DELETE",
-      body: JSON.stringify({ id, user: username }),
+      body: JSON.stringify({ id: item._id, user: username }),
       headers: { "Content-Type": "application/json" },
     });
-    setDeleteId(null); fetchBudgets();
+    
+    if (res.ok) toast.success(`Deleted "${item.title}"`);
+    else toast.error("Failed to delete transaction");
+
+    setDeleteItem(null); fetchBudgets();
   }
 
   async function handleEditBudget(budget) {
-    await fetch("/api/budgets", {
+    const res = await fetch("/api/budgets", {
       method: "PATCH",
       body: JSON.stringify({ ...budget, user: username }),
       headers: { "Content-Type": "application/json" },
     });
+
+    if (res.ok) toast.success(`Updated "${budget.title}"`);
+    else toast.error("Failed to update transaction");
+
     fetchBudgets(); setShowForm(false); setEditing(null);
   }
 
@@ -350,14 +363,14 @@ export default function Dashboard() {
               ? filteredBudgets.map((b, i) => (
                 <BudgetListRow
                   key={b._id} budget={b} index={i}
-                  onDelete={() => setDeleteId(b._id)}
+                  onDelete={() => setDeleteItem(b)}
                   onEdit={() => openForm(b)}
                 />
               ))
               : filteredBudgets.map((b, i) => (
                 <BudgetCard
                   key={b._id} budget={b} index={i}
-                  onDelete={() => setDeleteId(b._id)}
+                  onDelete={() => setDeleteItem(b)}
                   onEdit={() => openForm(b)}
                 />
               ))
@@ -367,13 +380,13 @@ export default function Dashboard() {
 
       {/* ── Delete confirmation modal ── */}
       <AnimatePresence>
-        {deleteId && (
-          <ModalBackdrop onClose={() => setDeleteId(null)}>
+        {deleteItem && (
+          <ModalBackdrop onClose={() => setDeleteItem(null)}>
             <div className="max-w-sm mx-auto">
               <div className="bg-[#080808] border border-white/10 rounded-xl p-6 relative">
                 {/* Close */}
                 <button
-                  onClick={() => setDeleteId(null)}
+                  onClick={() => setDeleteItem(null)}
                   className="absolute top-4 right-4 w-7 h-7 rounded-md bg-white/4 flex items-center justify-center text-secondary/40 hover:text-accent hover:bg-white/8 transition-all duration-150"
                   aria-label="Close"
                 >
@@ -384,16 +397,26 @@ export default function Dashboard() {
                   <FiAlertTriangle className="text-red-400 text-base" strokeWidth={1.5} />
                 </div>
                 <h3 className="font-grotesk text-accent font-semibold text-base mb-1 tracking-tight">Delete transaction?</h3>
+                
+                {/* Transaction Details */}
+                <div className="bg-[#0e0e0e] border border-white/6 rounded-lg p-3 my-4">
+                  <p className="text-sm font-medium text-accent break-words">{deleteItem.title}</p>
+                  <p className="text-xs text-secondary/60 mt-1 capitalize">{deleteItem.category} • {new Date(deleteItem.createdAt).toLocaleDateString("en-IN")}</p>
+                  <p className={`text-sm font-bold mt-2 tabular-nums ${deleteItem.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                    {deleteItem.type === "income" ? "+" : "−"}₹{Number(deleteItem.amount).toLocaleString("en-IN")}
+                  </p>
+                </div>
+
                 <p className="text-secondary/40 text-sm mb-5">This action cannot be undone.</p>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setDeleteId(null)}
+                    onClick={() => setDeleteItem(null)}
                     className="flex-1 py-2.5 rounded-lg border border-white/8 text-secondary/60 text-sm font-medium hover:text-accent hover:border-white/15 transition-all duration-150 active:scale-[0.98]"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleDeleteBudget(deleteId)}
+                    onClick={() => handleDeleteBudget(deleteItem)}
                     className="flex-1 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/15 transition-all duration-150 active:scale-[0.98]"
                   >
                     Delete

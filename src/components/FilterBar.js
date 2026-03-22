@@ -2,6 +2,7 @@
 import { FiSliders, FiX, FiArrowUp, FiArrowDown, FiChevronDown, FiSearch } from "react-icons/fi";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import CustomSelect from "@/components/CustomSelect";
 
 const categories = ["all", "school friends", "college friends", "religion", "personal", "miscellaneous"];
 const ranges = [
@@ -52,7 +53,7 @@ export default function FilterBar({
     "text-secondary/50 border-transparent hover:text-accent hover:border-white/8";
 
   return (
-    <div className="mb-2 flex flex-col gap-3">
+    <div className="mb-2 flex flex-col gap-3 relative z-[20]">
       {/* Search bar */}
       <div className="relative">
         <FiSearch
@@ -183,34 +184,33 @@ export default function FilterBar({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ type: "spring", stiffness: 250, damping: 28 }}
-            className="overflow-hidden"
+            className="overflow-visible"
           >
-            <div className="bg-[#0a0a0a] border border-white/8 rounded-lg p-4">
+            <div className="bg-[#0a0a0a] border border-white/8 rounded-lg p-4 relative z-[30]">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Category</label>
-                  <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className={selectCls}>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat === "all" ? "All categories" : cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <CustomSelect 
+                    value={filterCategory} 
+                    onChange={setFilterCategory} 
+                    options={categories.map(c => ({ value: c, label: c === "all" ? "All categories" : c.charAt(0).toUpperCase() + c.slice(1) }))} 
+                  />
                 </div>
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Month</label>
-                  <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className={selectCls}>
-                    {months.map((m, i) => (
-                      <option key={m} value={i === 0 ? "all" : i}>{m}</option>
-                    ))}
-                  </select>
+                  <CustomSelect 
+                    value={String(filterMonth)} 
+                    onChange={setFilterMonth} 
+                    options={months.map((m, i) => ({ value: String(i === 0 ? "all" : i), label: m }))} 
+                  />
                 </div>
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Year</label>
-                  <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className={selectCls}>
-                    <option value="all">All years</option>
-                    {years.map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
+                  <CustomSelect 
+                    value={String(filterYear)} 
+                    onChange={setFilterYear} 
+                    options={[ { value: "all", label: "All years" }, ...years.map(y => ({ value: String(y), label: String(y) })) ]} 
+                  />
                 </div>
               </div>
             </div>

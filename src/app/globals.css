@@ -22,13 +22,55 @@ a {
   transition: color 0.2s;
 }
 
+/* ── Hide scrollbars globally ── */
 ::-webkit-scrollbar {
-  width: 8px;
-  background: var(--color-dark);
+  width: 0px;
+  height: 0px;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 4px;
+  background: transparent;
+}
+
+body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* ── Global number input spinner removal ── */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ── Input Styling ── */
+input:not([type="checkbox"]):not([type="radio"]), 
+textarea {
+  background-color: #0e0e0e;
+  color: var(--color-accent);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+input:focus, textarea:focus {
+  border-color: rgba(86, 130, 177, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(86, 130, 177, 0.05);
+  outline: none;
 }
 
 /* ── Global select / option fix ── */

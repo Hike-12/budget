@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { FiPlus, FiSave, FiTag, FiFileText, FiAlignLeft, FiHash } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import CustomSelect from "@/components/CustomSelect";
+import CustomDatePicker from "@/components/CustomDatePicker";
 
 const categories = [
   "school friends",
@@ -146,31 +148,19 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
             <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
               <FiTag strokeWidth={2} className="text-[10px]" /> Category
             </label>
-            <select
-              className={inputCls}
+            <CustomSelect
               value={category}
-              onChange={e => setCategory(e.target.value)}
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23739EC9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center",
-                backgroundSize: "1rem", paddingRight: "2.5rem",
-              }}
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-              ))}
-            </select>
+              onChange={setCategory}
+              options={categories.map(c => ({ value: c, label: c.charAt(0).toUpperCase() + c.slice(1) }))}
+            />
           </div>
 
           {/* Date */}
           <div>
             <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Date</label>
-            <input
-              type="date"
-              className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 cursor-pointer"
-              style={{ background: "var(--color-accent)", color: "var(--color-dark)", border: "1px solid rgba(255,255,255,0.08)" }}
+            <CustomDatePicker
               value={date}
-              onChange={e => setDate(e.target.value)}
+              onChange={setDate}
             />
           </div>
 
