@@ -113,3 +113,15 @@ input[type="date"] {
   background: var(--color-accent);
   color: var(--color-dark);
 }
+
+/* ── Privacy Mode (Number Blurring) ── */
+.tabular-nums {
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.blur-numbers .tabular-nums:not(input) {
+  filter: blur(14px);
+  user-select: none;
+  opacity: 0.8;
+  pointer-events: none;
+}

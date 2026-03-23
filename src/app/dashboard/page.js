@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/sonner";
 import {
   FiPlus, FiInbox, FiAlertTriangle, FiX,
-  FiList, FiGrid,
+  FiList, FiGrid, FiEye, FiEyeOff
 } from "react-icons/fi";
 import { LuLayoutGrid, LuGrid2X2, LuGrid3X3 } from "react-icons/lu";
 
@@ -158,10 +158,19 @@ export default function Dashboard() {
   const [filterRange,    setFilterRange]    = useState("all");
   const [search,         setSearch]         = useState("");
   const [gridCols,       setGridCols]       = useState(3); // 1, 2, 3, 4 or "list"
+  const [isBlurred,      setIsBlurred]      = useState(true);
 
   useEffect(() => {
     setUsername(localStorage.getItem("username") || "");
+    const storedBlur = localStorage.getItem("isBlurred");
+    if (storedBlur !== null) {
+      setIsBlurred(storedBlur === "true");
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("isBlurred", isBlurred);
+  }, [isBlurred]);
 
   async function fetchBudgets() {
     if (!username) return setBudgets([]);
@@ -273,21 +282,33 @@ export default function Dashboard() {
     : "";
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16">
+    <main className={`max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16 ${isBlurred ? "blur-numbers" : ""}`}>
       {/* Page header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
-        className="mb-8"
+        className="mb-8 flex items-end justify-between gap-4"
       >
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/4 border border-white/8 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-          <span className="text-primary/80 text-[10px] font-semibold uppercase tracking-[0.15em]">Overview</span>
+        <div>
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/4 border border-white/8 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <span className="text-primary/80 text-[10px] font-semibold uppercase tracking-[0.15em]">Overview</span>
+          </div>
+          <h1 className="font-grotesk text-3xl font-semibold text-accent tracking-tight">
+            Your finances{greetingName}
+          </h1>
         </div>
-        <h1 className="font-grotesk text-3xl font-semibold text-accent tracking-tight">
-          Your finances{greetingName}
-        </h1>
+
+        {/* Privacy Toggle Button */}
+        <button
+          onClick={() => setIsBlurred(prev => !prev)}
+          aria-label={isBlurred ? "Show numbers" : "Hide numbers"}
+          title={isBlurred ? "Show numbers" : "Hide numbers"}
+          className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/4 border border-white/10 text-secondary/60 hover:text-accent hover:bg-white/10 hover:border-white/15 transition-all duration-200 active:scale-95"
+        >
+          {isBlurred ? <FiEyeOff strokeWidth={1.5} size={18} /> : <FiEye strokeWidth={1.5} size={18} />}
+        </button>
       </motion.div>
 
       {/* Balance widget */}
