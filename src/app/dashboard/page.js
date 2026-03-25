@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import BudgetCard from "@/components/BudgetCard";
 import BudgetForm from "@/components/BudgetForm";
 import TotalBalance from "@/components/TotalBalance";
@@ -143,6 +144,9 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
 
 /* ── Main Dashboard ── */
 export default function Dashboard() {
+  const router = useRouter();
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const authToastRef = useRef(false);
   const [budgets,  setBudgets]  = useState([]);
   const [editing,  setEditing]  = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
@@ -161,7 +165,17 @@ export default function Dashboard() {
   const [isBlurred,      setIsBlurred]      = useState(true);
 
   useEffect(() => {
-    setUsername(localStorage.getItem("username") || "");
+    const storedUser = localStorage.getItem("username");
+    if (!storedUser) {
+      if (!authToastRef.current) {
+        toast.error("Please login to view dashboard");
+        authToastRef.current = true;
+      }
+      router.push("/login");
+      return;
+    }
+    setUsername(storedUser);
+    setIsAuthChecking(false);
     const storedBlur = localStorage.getItem("isBlurred");
     if (storedBlur !== null) {
       setIsBlurred(storedBlur === "true");
@@ -280,6 +294,14 @@ export default function Dashboard() {
   const greetingName = username
     ? `, ${username.charAt(0).toUpperCase() + username.slice(1)}`
     : "";
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-dark flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <main className={`max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16 ${isBlurred ? "blur-numbers" : ""}`}>

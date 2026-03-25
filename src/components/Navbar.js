@@ -3,13 +3,24 @@ import { FaPiggyBank } from "react-icons/fa";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const router = useRouter();
+  const [username, setUsername] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem("username");
-    router.push("/login");
+  useEffect(() => {
+    setUsername(localStorage.getItem("username"));
+  }, []);
+
+  const handleAction = () => {
+    if (username) {
+      localStorage.removeItem("username");
+      setUsername(null);
+      router.push("/login");
+    } else {
+      router.push("/login");
+    }
   };
 
   return (
@@ -26,10 +37,10 @@ export default function Navbar() {
           <span className="tracking-tight">Budgetly</span>
         </Link>
         <button 
-          onClick={handleLogout}
+          onClick={handleAction}
           className="text-sm font-semibold bg-white/5 hover:bg-white/10 text-accent px-5 py-2.5 rounded-md backdrop-blur-md transition-all border border-white/10 hover:border-white/20 cursor-pointer"
         >
-          Logout
+          {username ? "Logout" : "Login"}
         </button>
       </div>
     </motion.nav>
