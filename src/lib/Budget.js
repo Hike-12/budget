@@ -13,7 +13,7 @@ const BudgetSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   user: String,
   // NEW: stable client-generated id from the app
-  clientId: { type: String, index: true, default: null },
+  clientId: { type: String, index: true },
 });
 
 BudgetSchema.index({ user: 1, clientId: 1 }, { unique: true, sparse: true });

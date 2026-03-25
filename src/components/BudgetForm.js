@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FiPlus, FiSave, FiTag, FiFileText, FiAlignLeft, FiHash } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import CustomSelect from "@/components/CustomSelect";
@@ -16,51 +16,61 @@ const categories = [
 const inputCls =
   "w-full bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 placeholder:text-secondary/25";
 
+const defaultState = (editing) => ({
+  title: editing?.title ?? "",
+  amount: editing?.amount ?? "",
+  type: editing?.type ?? "expense",
+  note: editing?.note ?? "",
+  category: editing?.category ?? "miscellaneous",
+  date: editing?.createdAt
+    ? new Date(editing.createdAt).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10),
+});
+
 export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState("expense");
-  const [note, setNote] = useState("");
-  const [category, setCategory] = useState("miscellaneous");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [form, setForm] = useState(() => defaultState(editing));
   const [errors, setErrors] = useState({});
 
+  // Re-seed when editing target switches  (useEffect is correct here — it's
+  // a genuine synchronisation with an external prop change, not derivable synchronously)
   useEffect(() => {
-    if (editing) {
-      setTitle(editing.title);
-      setAmount(editing.amount);
-      setType(editing.type);
-      setNote(editing.note || "");
-      setCategory(editing.category || "miscellaneous");
-      setDate(editing.createdAt
-        ? new Date(editing.createdAt).toISOString().slice(0, 10)
-        : new Date().toISOString().slice(0, 10));
-    } else {
-      setTitle(""); setAmount(""); setType("expense");
-      setNote(""); setCategory("miscellaneous");
-      setDate(new Date().toISOString().slice(0, 10));
-    }
+    setForm(defaultState(editing));
     setErrors({});
   }, [editing]);
 
-  function validate() {
-    const e = {};
-    if (!title.trim()) e.title = "Title is required";
-    if (!amount || Number(amount) <= 0) e.amount = "Enter a valid amount";
-    return e;
-  }
+  const set = useCallback((field) => (value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => ({ ...prev, [field]: null }));
+  }, []);
 
-  function handleSubmit(evt) {
+  const validate = useCallback(() => {
+    const e = {};
+    if (!form.title.trim()) e.title = "Title is required";
+    if (!form.amount || Number(form.amount) <= 0) e.amount = "Enter a valid amount";
+    return e;
+  }, [form.title, form.amount]);
+
+  const handleSubmit = useCallback((evt) => {
     evt.preventDefault();
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
-    const payload = { title: title.trim(), amount: Number(amount), type, note, category, createdAt: new Date(date) };
-    if (editing) { onEdit({ id: editing._id, ...payload }); setEditing(null); }
-    else onAdd(payload);
-    setTitle(""); setAmount(""); setType("expense"); setNote(""); setCategory("miscellaneous");
-    setDate(new Date().toISOString().slice(0, 10));
+    const payload = {
+      title: form.title.trim(),
+      amount: Number(form.amount),
+      type: form.type,
+      note: form.note,
+      category: form.category,
+      createdAt: new Date(form.date),
+    };
+    if (editing) {
+      onEdit({ id: editing._id, ...payload });
+      setEditing(null);
+    } else {
+      onAdd(payload);
+    }
+    setForm(defaultState(null));
     setErrors({});
-  }
+  }, [form, editing, validate, onAdd, onEdit, setEditing]);
 
   return (
     <div className="bg-[#080808] border border-white/10 rounded-xl p-5 sm:p-7 md:p-8">
@@ -74,21 +84,19 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
         <div className="flex gap-1.5 mb-5 p-1 bg-white/3 border border-white/8 rounded-lg">
           <button
             type="button"
-            onClick={() => setType("expense")}
-            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${type === "expense"
-                ? "bg-red-500/12 text-red-400 border border-red-500/20"
-                : "text-secondary/40 hover:text-accent border border-transparent"
-              }`}
+            onClick={() => set("type")("expense")}
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${form.type === "expense"
+              ? "bg-red-500/12 text-red-400 border border-red-500/20"
+              : "text-secondary/40 hover:text-accent border border-transparent"}`}
           >
             Expense
           </button>
           <button
             type="button"
-            onClick={() => setType("income")}
-            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${type === "income"
-                ? "bg-emerald-500/12 text-emerald-400 border border-emerald-500/20"
-                : "text-secondary/40 hover:text-accent border border-transparent"
-              }`}
+            onClick={() => set("type")("income")}
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${form.type === "income"
+              ? "bg-emerald-500/12 text-emerald-400 border border-emerald-500/20"
+              : "text-secondary/40 hover:text-accent border border-transparent"}`}
           >
             Income
           </button>
@@ -104,8 +112,8 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
               type="text"
               placeholder="e.g. Chai with friends"
               className={`${inputCls} ${errors.title ? "border-red-500/40" : ""}`}
-              value={title}
-              onChange={e => { setTitle(e.target.value); errors.title && setErrors(p => ({ ...p, title: null })); }}
+              value={form.title}
+              onChange={e => set("title")(e.target.value)}
             />
             <AnimatePresence>
               {errors.title && (
@@ -127,8 +135,8 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
                 type="number"
                 placeholder="0"
                 className={`${inputCls} pl-8 tabular-nums ${errors.amount ? "border-red-500/40" : ""}`}
-                value={amount}
-                onChange={e => { setAmount(e.target.value); errors.amount && setErrors(p => ({ ...p, amount: null })); }}
+                value={form.amount}
+                onChange={e => set("amount")(e.target.value)}
                 min="0" step="0.01"
               />
             </div>
@@ -147,8 +155,8 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
               <FiTag strokeWidth={2} className="text-[10px]" /> Category
             </label>
             <CustomSelect
-              value={category}
-              onChange={setCategory}
+              value={form.category}
+              onChange={set("category")}
               options={categories.map(c => ({ value: c, label: c.charAt(0).toUpperCase() + c.slice(1) }))}
             />
           </div>
@@ -156,10 +164,7 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           {/* Date */}
           <div>
             <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Date</label>
-            <CustomDatePicker
-              value={date}
-              onChange={setDate}
-            />
+            <CustomDatePicker value={form.date} onChange={set("date")} />
           </div>
 
           {/* Note */}
@@ -171,8 +176,8 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
             <textarea
               placeholder="Add context…"
               className={`${inputCls} resize-none`}
-              value={note}
-              onChange={e => setNote(e.target.value)}
+              value={form.note}
+              onChange={e => set("note")(e.target.value)}
               rows={2}
             />
           </div>

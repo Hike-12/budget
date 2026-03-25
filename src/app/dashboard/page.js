@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import BudgetCard from "@/components/BudgetCard";
 import BudgetForm from "@/components/BudgetForm";
 import TotalBalance from "@/components/TotalBalance";
@@ -22,6 +23,44 @@ const GRID_OPTIONS = [
   { cols: 3, label: "3 col", icon: <LuGrid3X3 strokeWidth={1.5} size={13} /> },
   { cols: 4, label: "4 col", icon: <LuLayoutGrid strokeWidth={1.5} size={13} /> },
 ];
+
+/* ── API helpers (plain async fns — used by useMutation) ── */
+async function fetchBudgetsApi(username) {
+  const res = await fetch(`/api/budgets?user=${username}`);
+  if (!res.ok) throw new Error("Failed to fetch budgets");
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+async function addBudgetApi({ budget, username }) {
+  const res = await fetch("/api/budgets", {
+    method: "POST",
+    body: JSON.stringify({ ...budget, user: username }),
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to add transaction");
+  return res.json();
+}
+
+async function deleteBudgetApi({ item, username }) {
+  const res = await fetch("/api/budgets", {
+    method: "DELETE",
+    body: JSON.stringify({ id: item._id, user: username }),
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to delete transaction");
+  return res.json();
+}
+
+async function editBudgetApi({ budget, username }) {
+  const res = await fetch("/api/budgets", {
+    method: "PATCH",
+    body: JSON.stringify({ ...budget, user: username }),
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to update transaction");
+  return res.json();
+}
 
 /* ── Modal backdrop ── */
 function ModalBackdrop({ children, onClose }) {
@@ -56,7 +95,7 @@ function EmptyState({ onAdd }) {
       transition={{ delay: 0.08, type: "spring", stiffness: 120, damping: 22 }}
       className="col-span-full"
     >
-      <div className="bg-[#0a0a0a] border border-white/6 rounded-xl px-8 py-16 text-center">
+      <div className="bg-transparent border border-dashed border-white/10 rounded-xl px-8 py-16 text-center">
         <div className="w-12 h-12 rounded-lg bg-white/4 border border-white/8 flex items-center justify-center mx-auto mb-4">
           <FiInbox className="text-secondary/40 text-xl" strokeWidth={1.5} />
         </div>
@@ -65,7 +104,7 @@ function EmptyState({ onAdd }) {
           Start your financial story. Add your first income or expense tracking now!
         </p>
         <button
-          onClick={onAdd}
+          onClick={() => onAdd()}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/10 text-accent/70 text-sm font-medium hover:text-accent hover:border-white/20 transition-all duration-150 active:scale-[0.98]"
         >
           <FiPlus strokeWidth={2.5} className="text-sm" />
@@ -82,9 +121,10 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
   const accentColor = isIncome ? "#34d399" : "#f87171";
   const accentBg = isIncome ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)";
 
-  const dateStr = new Date(budget.createdAt).toLocaleDateString("en-IN", {
-    month: "short", day: "numeric", year: "numeric",
-  });
+  const dateStr = useMemo(() =>
+    new Date(budget.createdAt).toLocaleDateString("en-IN", {
+      month: "short", day: "numeric", year: "numeric",
+    }), [budget.createdAt]);
 
   return (
     <motion.div
@@ -148,31 +188,19 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
 /* ── Main Dashboard ── */
 export default function Dashboard() {
   const router = useRouter();
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const qc = useQueryClient();
   const authToastRef = useRef(false);
-  const [budgets, setBudgets] = useState([]);
-  const [editing, setEditing] = useState(null);
-  const [deleteItem, setDeleteItem] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [username, setUsername] = useState("");
 
-  const [filterType, setFilterType] = useState("all");
-  const [filterCategory, setFilterCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [filterMonth, setFilterMonth] = useState("all");
-  const [filterYear, setFilterYear] = useState("all");
-  const [filterRange, setFilterRange] = useState("all");
-  const [search, setSearch] = useState("");
-  const [gridCols, setGridCols] = useState(3); // 1, 2, 3, 4 or "list"
+  /* ── Hydration-safe auth + preferences ──
+     Both server and client start with isReady=false / username=""
+     so the initial render is identical (loading spinner).
+     A single mount effect reads localStorage and resolves state. */
+  const [isReady, setIsReady] = useState(false);
+  const [username, setUsername] = useState("");
   const [isBlurred, setIsBlurred] = useState(true);
 
-  const [isLoadingBudgets, setIsLoadingBudgets] = useState(true);
-  const [pageSize, setPageSize] = useState(100);
-  const [visibleCount, setVisibleCount] = useState(100);
-
   useEffect(() => {
-    const storedUser = localStorage.getItem("username");
+    const storedUser = localStorage.getItem("username") ?? "";
     if (!storedUser) {
       if (!authToastRef.current) {
         toast.error("Please login to view dashboard");
@@ -182,78 +210,67 @@ export default function Dashboard() {
       return;
     }
     setUsername(storedUser);
-    setIsAuthChecking(false);
     const storedBlur = localStorage.getItem("isBlurred");
-    if (storedBlur !== null) {
-      setIsBlurred(storedBlur === "true");
-    }
+    if (storedBlur !== null) setIsBlurred(storedBlur === "true");
+    setIsReady(true);
+  }, [router]);
+
+  const toggleBlur = useCallback(() => {
+    setIsBlurred(prev => {
+      const next = !prev;
+      localStorage.setItem("isBlurred", next);
+      return next;
+    });
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("isBlurred", isBlurred);
-  }, [isBlurred]);
+  /* ── UI State ── */
+  const [editing, setEditing] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [filterType, setFilterType] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterRange, setFilterRange] = useState("all");
+  const [search, setSearch] = useState("");
+  const [gridCols, setGridCols] = useState(3);
+  const [pageSize, setPageSize] = useState(100);
+  const [visibleCount, setVisibleCount] = useState(100);
 
-  async function fetchBudgets() {
-    if (!username) return;
-    try {
-      if (budgets.length === 0) setIsLoadingBudgets(true);
-      const res = await fetch(`/api/budgets?user=${username}`);
-      const data = await res.json();
-      setBudgets(Array.isArray(data) ? data : []);
-    } catch { setBudgets([]); }
-    setIsLoadingBudgets(false);
-  }
+  /* ── Data: useQuery replaces useEffect + fetch ── */
+  const { data: budgets = [], isLoading: isLoadingBudgets } = useQuery({
+    queryKey: ["budgets", username],
+    queryFn: () => fetchBudgetsApi(username),
+    enabled: !!username,
+  });
 
-  useEffect(() => { fetchBudgets(); }, [username]);
+  /* ── Mutations ── */
+  const invalidate = useCallback(() => qc.invalidateQueries({ queryKey: ["budgets", username] }), [qc, username]);
 
-  // Reset paging if sort/filter/search/pageSize changes
-  useEffect(() => {
-    setVisibleCount(pageSize);
-  }, [search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange, pageSize]);
+  const addMutation = useMutation({
+    mutationFn: (budget) => addBudgetApi({ budget, username }),
+    onSuccess: (_, budget) => { toast.success(`Added "${budget.title}" successfully`); invalidate(); setShowForm(false); },
+    onError: () => toast.error("Failed to add transaction"),
+  });
 
-  async function handleAddBudget(budget) {
-    const res = await fetch("/api/budgets", {
-      method: "POST",
-      body: JSON.stringify({ ...budget, user: username }),
-      headers: { "Content-Type": "application/json" },
-    });
+  const deleteMutation = useMutation({
+    mutationFn: (item) => deleteBudgetApi({ item, username }),
+    onSuccess: (_, item) => { toast.success(`Deleted "${item.title}"`); invalidate(); setDeleteItem(null); },
+    onError: () => toast.error("Failed to delete transaction"),
+  });
 
-    if (res.ok) toast.success(`Added "${budget.title}" successfully`);
-    else toast.error("Failed to add transaction");
+  const editMutation = useMutation({
+    mutationFn: (budget) => editBudgetApi({ budget, username }),
+    onSuccess: (_, budget) => { toast.success(`Updated "${budget.title}"`); invalidate(); setShowForm(false); setEditing(null); },
+    onError: () => toast.error("Failed to update transaction"),
+  });
 
-    fetchBudgets(); setShowForm(false);
-  }
-
-  async function handleDeleteBudget(item) {
-    const res = await fetch("/api/budgets", {
-      method: "DELETE",
-      body: JSON.stringify({ id: item._id, user: username }),
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (res.ok) toast.success(`Deleted "${item.title}"`);
-    else toast.error("Failed to delete transaction");
-
-    setDeleteItem(null); fetchBudgets();
-  }
-
-  async function handleEditBudget(budget) {
-    const res = await fetch("/api/budgets", {
-      method: "PATCH",
-      body: JSON.stringify({ ...budget, user: username }),
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (res.ok) toast.success(`Updated "${budget.title}"`);
-    else toast.error("Failed to update transaction");
-
-    fetchBudgets(); setShowForm(false); setEditing(null);
-  }
-
+  /* ── Filtering & sorting: useMemo replaces useEffect ── */
   const filteredBudgets = useMemo(() => {
-    let arr = [...(Array.isArray(budgets) ? budgets : [])];
+    let arr = [...budgets];
 
-    // Text search
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       arr = arr.filter(b =>
@@ -295,26 +312,34 @@ export default function Dashboard() {
     return arr;
   }, [budgets, search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange]);
 
-  // Reset visible count whenever filters/search change
-  useEffect(() => {
+  /* ── visibleCount resets when filter keys change (derived, not an effect) ── */
+  // We track these as a stable key to compare — no useEffect needed
+  const filterKey = `${search}|${filterType}|${filterCategory}|${sortBy}|${sortOrder}|${filterMonth}|${filterYear}|${filterRange}|${pageSize}`;
+  const lastFilterKeyRef = useRef(filterKey);
+  if (lastFilterKeyRef.current !== filterKey) {
+    lastFilterKeyRef.current = filterKey;
+    // Direct state mutation during render is safe when guarded by a ref comparison
+    // (React docs: "render phase updates")
     setVisibleCount(pageSize);
-  }, [search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange, pageSize]);
+  }
 
-  function openForm(budget = null) { setEditing(budget); setShowForm(true); }
-  function closeForm() { setShowForm(false); setEditing(null); }
+  /* ── Stable callbacks ── */
+  const openForm = useCallback((budget = null) => { setEditing(budget); setShowForm(true); }, []);
+  const closeForm = useCallback(() => { setShowForm(false); setEditing(null); }, []);
 
-  const gridClass =
+  const gridClass = useMemo(() =>
     gridCols === "list" ? "flex flex-col gap-2" :
       gridCols === 1 ? "grid grid-cols-1 gap-3 items-stretch" :
         gridCols === 2 ? "grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch" :
           gridCols === 3 ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch" :
-            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch";
+            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch",
+    [gridCols]);
 
-  const greetingName = username
-    ? `, ${username.charAt(0).toUpperCase() + username.slice(1)}`
-    : "";
+  const greetingName = useMemo(() =>
+    username ? `, ${username.charAt(0).toUpperCase() + username.slice(1)}` : "",
+    [username]);
 
-  if (isAuthChecking) {
+  if (!isReady) {
     return (
       <div className="min-h-screen bg-dark flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -341,9 +366,9 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        {/* Privacy Toggle Button */}
+        {/* Privacy Toggle */}
         <button
-          onClick={() => setIsBlurred(prev => !prev)}
+          onClick={toggleBlur}
           aria-label={isBlurred ? "Show numbers" : "Hide numbers"}
           title={isBlurred ? "Show numbers" : "Hide numbers"}
           className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/4 border border-white/10 text-secondary/60 hover:text-accent hover:bg-white/10 hover:border-white/15 transition-all duration-200 active:scale-95"
@@ -426,15 +451,12 @@ export default function Dashboard() {
               onClick={() => setGridCols(typeof gridCols === "number" ? gridCols : 3)}
               title="Grid view"
               aria-label="Grid view"
-              className={`w-7 h-7 flex sm:hidden items-center justify-center rounded-md transition-all duration-150 ${typeof gridCols === "number" ? "bg-white/8 text-accent" : "text-secondary/35 hover:text-accent"
-                }`}
+              className={`w-7 h-7 flex sm:hidden items-center justify-center rounded-md transition-all duration-150 ${typeof gridCols === "number" ? "bg-white/8 text-accent" : "text-secondary/35 hover:text-accent"}`}
             >
               <FiGrid strokeWidth={1.5} size={13} />
             </button>
 
-            {/* Individual Opts */}
             {GRID_OPTIONS.map(opt => {
-              // 'List' shows everywhere. Multi-col + 1-col show ONLY on sm+
               const isDesktopOnly = opt.cols !== "list";
               return (
                 <button
@@ -442,11 +464,7 @@ export default function Dashboard() {
                   onClick={() => setGridCols(opt.cols)}
                   title={opt.label}
                   aria-label={opt.label}
-                  className={`w-7 h-7 items-center justify-center rounded-md transition-all duration-150 ${isDesktopOnly ? "hidden sm:flex" : "flex"
-                    } ${gridCols === opt.cols
-                      ? "bg-white/8 text-accent"
-                      : "text-secondary/35 hover:text-accent"
-                    }`}
+                  className={`w-7 h-7 items-center justify-center rounded-md transition-all duration-150 ${isDesktopOnly ? "hidden sm:flex" : "flex"} ${gridCols === opt.cols ? "bg-white/8 text-accent" : "text-secondary/35 hover:text-accent"}`}
                 >
                   {opt.icon}
                 </button>
@@ -471,7 +489,7 @@ export default function Dashboard() {
               </motion.div>
             )
             : filteredBudgets.length === 0
-              ? <EmptyState key="empty" onAdd={() => openForm()} />
+              ? <EmptyState key="empty" onAdd={openForm} />
               : gridCols === "list"
                 ? filteredBudgets.slice(0, visibleCount).map((b, i) => (
                   <BudgetListRow
@@ -512,7 +530,6 @@ export default function Dashboard() {
           <ModalBackdrop onClose={() => setDeleteItem(null)}>
             <div className="max-w-sm mx-auto">
               <div className="bg-[#080808] border border-white/10 rounded-xl p-6 relative">
-                {/* Close */}
                 <button
                   onClick={() => setDeleteItem(null)}
                   className="absolute top-4 right-4 w-7 h-7 rounded-md bg-white/4 flex items-center justify-center text-secondary/40 hover:text-accent hover:bg-white/8 transition-all duration-150"
@@ -526,7 +543,6 @@ export default function Dashboard() {
                 </div>
                 <h3 className="font-grotesk text-accent font-semibold text-base mb-1 tracking-tight">Delete transaction?</h3>
 
-                {/* Transaction Details */}
                 <div className="bg-[#0e0e0e] border border-white/6 rounded-lg p-3 my-4">
                   <p className="text-sm font-medium text-accent break-words">{deleteItem.title}</p>
                   <p className="text-xs text-secondary/60 mt-1 capitalize">{deleteItem.category} • {new Date(deleteItem.createdAt).toLocaleDateString("en-IN")}</p>
@@ -544,10 +560,11 @@ export default function Dashboard() {
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleDeleteBudget(deleteItem)}
-                    className="flex-1 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/15 transition-all duration-150 active:scale-[0.98]"
+                    onClick={() => deleteMutation.mutate(deleteItem)}
+                    disabled={deleteMutation.isPending}
+                    className="flex-1 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/15 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                   >
-                    Delete
+                    {deleteMutation.isPending ? "Deleting…" : "Delete"}
                   </button>
                 </div>
               </div>
@@ -561,7 +578,6 @@ export default function Dashboard() {
         {showForm && (
           <ModalBackdrop onClose={closeForm}>
             <div className="w-full max-w-[540px] mx-auto relative">
-              {/* Floating close button */}
               <button
                 onClick={closeForm}
                 className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 z-20 w-8 h-8 rounded-lg bg-[#111] border border-white/10 flex items-center justify-center text-secondary/50 hover:text-accent hover:border-white/20 transition-all duration-150 shadow-lg"
@@ -570,8 +586,8 @@ export default function Dashboard() {
                 <FiX strokeWidth={2} className="text-sm" />
               </button>
               <BudgetForm
-                onAdd={handleAddBudget}
-                onEdit={handleEditBudget}
+                onAdd={(b) => addMutation.mutate(b)}
+                onEdit={(b) => editMutation.mutate(b)}
                 editing={editing}
                 setEditing={setEditing}
               />

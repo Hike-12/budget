@@ -5,7 +5,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) throw new Error("Please define MONGODB_URI in .env.local");
 
 let cached = global.mongoose;
-if (!cached) cached = global.mongoose = { conn: null, promise: null };
+if (!cached) cached = global.mongoose = { conn: null, promise: null, migrated: false };
 
 export async function connectToDB() {
   if (cached.conn) return cached.conn;
@@ -15,5 +15,25 @@ export async function connectToDB() {
     }).then(m => m);
   }
   cached.conn = await cached.promise;
+
+  // One-time migration: remove explicit clientId:null stored by old schema default.
+  // The sparse unique index only ignores *absent* fields, not null fields —
+  // so documents with clientId:null were colliding with each other on add.
+  if (!cached.migrated) {
+    cached.migrated = true;
+    try {
+      const db = cached.conn.connection.db;
+      const result = await db.collection("budgets").updateMany(
+        { clientId: { $type: "null" } },
+        { $unset: { clientId: "" } }
+      );
+      if (result.modifiedCount > 0) {
+        console.log(`[Migration] Cleaned up ${result.modifiedCount} legacy clientId:null entries.`);
+      }
+    } catch (_) {
+      // non-fatal — best effort cleanup
+    }
+  }
+
   return cached.conn;
 }

@@ -1,6 +1,7 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/sonner";
+import QueryProvider from "@/components/QueryProvider";
 
 export const metadata = {
   title: "Budget Tracker",
@@ -67,8 +68,10 @@ export default function RootLayout({ children }) {
           }}
         />
         <Navbar />
-        <main className="relative z-10">{children}</main>
-        <Toaster position="top-right" />
+        <QueryProvider>
+          <main className="relative z-10">{children}</main>
+          <Toaster position="top-right" />
+        </QueryProvider>
       </body>
     </html>
   );
