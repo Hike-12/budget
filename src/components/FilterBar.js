@@ -6,10 +6,10 @@ import CustomSelect from "@/components/CustomSelect";
 
 const categories = ["all", "school friends", "college friends", "religion", "personal", "miscellaneous"];
 const ranges = [
-  { label: "All",   value: "all"   },
-  { label: "Week",  value: "week"  },
+  { label: "All", value: "all" },
+  { label: "Week", value: "week" },
   { label: "Month", value: "month" },
-  { label: "Year",  value: "year"  },
+  { label: "Year", value: "year" },
 ];
 
 const selectCls =
@@ -105,15 +105,14 @@ export default function FilterBar({
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`${pillBase} capitalize ${
-                filterType === t
+              className={`${pillBase} capitalize ${filterType === t
                   ? t === "income"
                     ? "bg-emerald-500/15 text-emerald-400"
                     : t === "expense"
-                    ? "bg-red-500/15 text-red-400"
-                    : pillActive
+                      ? "bg-red-500/15 text-red-400"
+                      : pillActive
                   : pillInactive
-              }`}
+                }`}
             >
               {t === "all" ? "All" : t}
             </button>
@@ -121,20 +120,21 @@ export default function FilterBar({
         </div>
 
         {/* Sort */}
-        <div className="flex items-center gap-1 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9 min-w-[120px]">
-          <CustomSelect
-            value={sortBy}
-            onChange={setSortBy}
-            options={[
-              { label: "Date", value: "createdAt" },
-              { label: "Amount", value: "amount" }
-            ]}
-            className="flex-1 !min-w-0"
-            buttonClassName="!bg-transparent !border-none !py-0 !px-2 !text-xs !h-full !shadow-none"
-          />
+        <div className="flex items-center gap-1">
+          <div className="w-24">
+            <CustomSelect
+              value={sortBy}
+              onChange={setSortBy}
+              options={[
+                { label: "Date", value: "createdAt" },
+                { label: "Amount", value: "amount" }
+              ]}
+              buttonClassName="!bg-[#0a0a0a] !border-white/8 !px-3 !py-1.5 !h-9 !text-xs !text-secondary/60 hover:!text-accent !rounded-lg"
+            />
+          </div>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="w-7 h-7 flex items-center justify-center text-secondary/50 hover:text-accent transition-colors rounded-md border border-white/5 hover:bg-white/5"
+            className="w-9 h-9 flex items-center justify-center text-secondary/60 hover:text-accent transition-colors rounded-lg bg-[#0a0a0a] border border-white/8"
             aria-label="Toggle sort order"
           >
             {sortOrder === "asc"
@@ -146,11 +146,10 @@ export default function FilterBar({
         {/* More filters toggle */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-all duration-150 ${
-            isExpanded
+          className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-all duration-150 ${isExpanded
               ? "bg-white/6 border-white/15 text-accent"
               : "bg-[#0a0a0a] border-white/8 text-secondary/50 hover:text-accent hover:border-white/12"
-          }`}
+            }`}
         >
           <FiSliders strokeWidth={1.5} className="text-xs" />
           More
@@ -192,26 +191,26 @@ export default function FilterBar({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Category</label>
-                  <CustomSelect 
-                    value={filterCategory} 
-                    onChange={setFilterCategory} 
-                    options={categories.map(c => ({ value: c, label: c === "all" ? "All categories" : c.charAt(0).toUpperCase() + c.slice(1) }))} 
+                  <CustomSelect
+                    value={filterCategory}
+                    onChange={setFilterCategory}
+                    options={categories.map(c => ({ value: c, label: c === "all" ? "All categories" : c.charAt(0).toUpperCase() + c.slice(1) }))}
                   />
                 </div>
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Month</label>
-                  <CustomSelect 
-                    value={String(filterMonth)} 
-                    onChange={setFilterMonth} 
-                    options={months.map((m, i) => ({ value: String(i === 0 ? "all" : i), label: m }))} 
+                  <CustomSelect
+                    value={String(filterMonth)}
+                    onChange={setFilterMonth}
+                    options={months.map((m, i) => ({ value: String(i === 0 ? "all" : i), label: m }))}
                   />
                 </div>
                 <div>
                   <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Year</label>
-                  <CustomSelect 
-                    value={String(filterYear)} 
-                    onChange={setFilterYear} 
-                    options={[ { value: "all", label: "All years" }, ...years.map(y => ({ value: String(y), label: String(y) })) ]} 
+                  <CustomSelect
+                    value={String(filterYear)}
+                    onChange={setFilterYear}
+                    options={[{ value: "all", label: "All years" }, ...years.map(y => ({ value: String(y), label: String(y) }))]}
                   />
                 </div>
               </div>

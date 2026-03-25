@@ -5,6 +5,7 @@ import BudgetCard from "@/components/BudgetCard";
 import BudgetForm from "@/components/BudgetForm";
 import TotalBalance from "@/components/TotalBalance";
 import FilterBar from "@/components/FilterBar";
+import CustomSelect from "@/components/CustomSelect";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/sonner";
 import {
@@ -15,11 +16,11 @@ import { LuLayoutGrid, LuGrid2X2, LuGrid3X3 } from "react-icons/lu";
 
 /* ── Column-count icon mapping ── */
 const GRID_OPTIONS = [
-  { cols: "list", label: "List",   icon: <FiList strokeWidth={1.5} size={14} /> },
-  { cols: 1,      label: "1 col",  icon: <FiGrid strokeWidth={1.5} size={13} /> },
-  { cols: 2,      label: "2 col",  icon: <LuGrid2X2 strokeWidth={1.5} size={13} /> },
-  { cols: 3,      label: "3 col",  icon: <LuGrid3X3 strokeWidth={1.5} size={13} /> },
-  { cols: 4,      label: "4 col",  icon: <LuLayoutGrid strokeWidth={1.5} size={13} /> },
+  { cols: "list", label: "List", icon: <FiList strokeWidth={1.5} size={14} /> },
+  { cols: 1, label: "1 col", icon: <FiGrid strokeWidth={1.5} size={13} /> },
+  { cols: 2, label: "2 col", icon: <LuGrid2X2 strokeWidth={1.5} size={13} /> },
+  { cols: 3, label: "3 col", icon: <LuGrid3X3 strokeWidth={1.5} size={13} /> },
+  { cols: 4, label: "4 col", icon: <LuLayoutGrid strokeWidth={1.5} size={13} /> },
 ];
 
 /* ── Modal backdrop ── */
@@ -77,9 +78,9 @@ function EmptyState({ onAdd }) {
 
 /* ── BudgetCard in list-view mode ── */
 function BudgetListRow({ budget, onDelete, onEdit, index }) {
-  const isIncome   = budget.type === "income";
+  const isIncome = budget.type === "income";
   const accentColor = isIncome ? "#34d399" : "#f87171";
-  const accentBg    = isIncome ? "rgba(52,211,153,0.08)"  : "rgba(248,113,113,0.08)";
+  const accentBg = isIncome ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)";
 
   const dateStr = new Date(budget.createdAt).toLocaleDateString("en-IN", {
     month: "short", day: "numeric", year: "numeric",
@@ -106,18 +107,20 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
       </div>
 
       {/* Category tag */}
-      <span
-        className="hidden sm:inline-flex px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide flex-shrink-0"
-        style={{ background: accentBg, color: accentColor }}
-      >
-        {budget.category}
-      </span>
+      <div className="hidden sm:flex items-center justify-start w-28 flex-shrink-0">
+        <span
+          className="px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide"
+          style={{ background: accentBg, color: accentColor }}
+        >
+          {budget.category}
+        </span>
+      </div>
 
       {/* Date */}
-      <span className="text-[11px] text-secondary/35 flex-shrink-0 hidden md:block">{dateStr}</span>
+      <span className="text-[11px] text-secondary/35 flex-shrink-0 hidden md:block w-24 text-right">{dateStr}</span>
 
       {/* Amount */}
-      <span className="font-grotesk text-sm font-semibold tabular-nums flex-shrink-0" style={{ color: accentColor }}>
+      <span className="font-grotesk text-sm font-semibold tabular-nums flex-shrink-0 w-28 text-right" style={{ color: accentColor }}>
         {isIncome ? "+" : "−"}₹{Number(budget.amount).toLocaleString("en-IN")}
       </span>
 
@@ -147,22 +150,26 @@ export default function Dashboard() {
   const router = useRouter();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const authToastRef = useRef(false);
-  const [budgets,  setBudgets]  = useState([]);
-  const [editing,  setEditing]  = useState(null);
+  const [budgets, setBudgets] = useState([]);
+  const [editing, setEditing] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [username, setUsername] = useState("");
 
-  const [filterType,     setFilterType]     = useState("all");
+  const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
-  const [sortBy,         setSortBy]         = useState("createdAt");
-  const [sortOrder,      setSortOrder]      = useState("desc");
-  const [filterMonth,    setFilterMonth]    = useState("all");
-  const [filterYear,     setFilterYear]     = useState("all");
-  const [filterRange,    setFilterRange]    = useState("all");
-  const [search,         setSearch]         = useState("");
-  const [gridCols,       setGridCols]       = useState(3); // 1, 2, 3, 4 or "list"
-  const [isBlurred,      setIsBlurred]      = useState(true);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterRange, setFilterRange] = useState("all");
+  const [search, setSearch] = useState("");
+  const [gridCols, setGridCols] = useState(3); // 1, 2, 3, 4 or "list"
+  const [isBlurred, setIsBlurred] = useState(true);
+
+  const [isLoadingBudgets, setIsLoadingBudgets] = useState(true);
+  const [pageSize, setPageSize] = useState(25);
+  const [visibleCount, setVisibleCount] = useState(25);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("username");
@@ -187,15 +194,22 @@ export default function Dashboard() {
   }, [isBlurred]);
 
   async function fetchBudgets() {
-    if (!username) return setBudgets([]);
+    if (!username) return;
     try {
-      const res  = await fetch(`/api/budgets?user=${username}`);
+      if (budgets.length === 0) setIsLoadingBudgets(true);
+      const res = await fetch(`/api/budgets?user=${username}`);
       const data = await res.json();
       setBudgets(Array.isArray(data) ? data : []);
     } catch { setBudgets([]); }
+    setIsLoadingBudgets(false);
   }
 
   useEffect(() => { fetchBudgets(); }, [username]);
+
+  // Reset paging if sort/filter/search/pageSize changes
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange, pageSize]);
 
   async function handleAddBudget(budget) {
     const res = await fetch("/api/budgets", {
@@ -203,10 +217,10 @@ export default function Dashboard() {
       body: JSON.stringify({ ...budget, user: username }),
       headers: { "Content-Type": "application/json" },
     });
-    
+
     if (res.ok) toast.success(`Added "${budget.title}" successfully`);
     else toast.error("Failed to add transaction");
-    
+
     fetchBudgets(); setShowForm(false);
   }
 
@@ -216,7 +230,7 @@ export default function Dashboard() {
       body: JSON.stringify({ id: item._id, user: username }),
       headers: { "Content-Type": "application/json" },
     });
-    
+
     if (res.ok) toast.success(`Deleted "${item.title}"`);
     else toast.error("Failed to delete transaction");
 
@@ -244,19 +258,19 @@ export default function Dashboard() {
       const q = search.trim().toLowerCase();
       arr = arr.filter(b =>
         b.title?.toLowerCase().includes(q) ||
-        b.note?.toLowerCase().includes(q)  ||
+        b.note?.toLowerCase().includes(q) ||
         b.category?.toLowerCase().includes(q)
       );
     }
 
-    if (filterType !== "all")     arr = arr.filter(b => b.type === filterType);
+    if (filterType !== "all") arr = arr.filter(b => b.type === filterType);
     if (filterCategory !== "all") arr = arr.filter(b => b.category === filterCategory);
 
     if (filterMonth !== "all" || filterYear !== "all") {
       arr = arr.filter(b => {
         const d = new Date(b.createdAt);
         const mOk = filterMonth === "all" || d.getMonth() + 1 === Number(filterMonth);
-        const yOk = filterYear  === "all" || d.getFullYear()  === Number(filterYear);
+        const yOk = filterYear === "all" || d.getFullYear() === Number(filterYear);
         return mOk && yOk;
       });
     }
@@ -265,9 +279,9 @@ export default function Dashboard() {
       const now = new Date();
       arr = arr.filter(b => {
         const d = new Date(b.createdAt);
-        if (filterRange === "week")  { const wa = new Date(now); wa.setDate(now.getDate() - 7); return d >= wa && d <= now; }
+        if (filterRange === "week") { const wa = new Date(now); wa.setDate(now.getDate() - 7); return d >= wa && d <= now; }
         if (filterRange === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        if (filterRange === "year")  return d.getFullYear() === now.getFullYear();
+        if (filterRange === "year") return d.getFullYear() === now.getFullYear();
         return true;
       });
     }
@@ -282,14 +296,14 @@ export default function Dashboard() {
   }, [budgets, search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange]);
 
   function openForm(budget = null) { setEditing(budget); setShowForm(true); }
-  function closeForm()             { setShowForm(false);  setEditing(null); }
+  function closeForm() { setShowForm(false); setEditing(null); }
 
   const gridClass =
     gridCols === "list" ? "flex flex-col gap-2" :
-    gridCols === 1      ? "grid grid-cols-1 gap-3 items-stretch" :
-    gridCols === 2      ? "grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch" :
-    gridCols === 3      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch" :
-                          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch";
+      gridCols === 1 ? "grid grid-cols-1 gap-3 items-stretch" :
+        gridCols === 2 ? "grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch" :
+          gridCols === 3 ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch" :
+            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch";
 
   const greetingName = username
     ? `, ${username.charAt(0).toUpperCase() + username.slice(1)}`
@@ -345,14 +359,14 @@ export default function Dashboard() {
       >
         <div className="flex-1 min-w-0">
           <FilterBar
-            filterType={filterType}     setFilterType={setFilterType}
-            sortBy={sortBy}             setSortBy={setSortBy}
-            sortOrder={sortOrder}       setSortOrder={setSortOrder}
+            filterType={filterType} setFilterType={setFilterType}
+            sortBy={sortBy} setSortBy={setSortBy}
+            sortOrder={sortOrder} setSortOrder={setSortOrder}
             filterCategory={filterCategory} setFilterCategory={setFilterCategory}
-            filterMonth={filterMonth}   setFilterMonth={setFilterMonth}
-            filterYear={filterYear}     setFilterYear={setFilterYear}
-            filterRange={filterRange}   setFilterRange={setFilterRange}
-            search={search}             setSearch={setSearch}
+            filterMonth={filterMonth} setFilterMonth={setFilterMonth}
+            filterYear={filterYear} setFilterYear={setFilterYear}
+            filterRange={filterRange} setFilterRange={setFilterRange}
+            search={search} setSearch={setSearch}
           />
         </div>
 
@@ -373,77 +387,119 @@ export default function Dashboard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.12 }}
-        className="flex items-center justify-between mb-4"
+        className="flex items-end justify-between mb-4 gap-4"
       >
-        <h2 className="font-grotesk text-accent/70 text-sm font-semibold tracking-tight">
+        <h2 className="font-grotesk text-accent/70 text-sm font-semibold tracking-tight flex-shrink-0">
           Transactions
-          {filteredBudgets.length > 0 && (
-            <span className="ml-2 text-secondary/35 font-normal tabular-nums">{filteredBudgets.length}</span>
+          {!isLoadingBudgets && filteredBudgets.length > 0 && (
+            <span className="ml-2 text-secondary/35 font-normal tabular-nums">
+              {Math.min(visibleCount, filteredBudgets.length)} of {filteredBudgets.length}
+            </span>
           )}
         </h2>
 
-        {/* Grid / List view toggle */}
-        <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1">
-          {/* Universal Mobile Grid Button (hidden on desktop) */}
-          <button
-            onClick={() => setGridCols(typeof gridCols === "number" ? gridCols : 3)}
-            title="Grid view"
-            aria-label="Grid view"
-            className={`w-7 h-7 flex sm:hidden items-center justify-center rounded-md transition-all duration-150 ${
-              typeof gridCols === "number" ? "bg-white/8 text-accent" : "text-secondary/35 hover:text-accent"
-            }`}
-          >
-            <FiGrid strokeWidth={1.5} size={13} />
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Page Size Dropdown */}
+          <div className="hidden sm:block w-28">
+            <CustomSelect
+              value={pageSize}
+              onChange={(val) => setPageSize(Number(val))}
+              options={[
+                { value: 25, label: "Show 25" },
+                { value: 50, label: "Show 50" },
+                { value: 75, label: "Show 75" },
+                { value: 100, label: "Show 100" },
+              ]}
+              buttonClassName="!bg-[#0a0a0a] !border-white/8 !px-3 !py-1.5 !h-9 !text-xs !text-secondary/60 hover:!text-accent !rounded-lg"
+            />
+          </div>
 
-          {/* Individual Opts */}
-          {GRID_OPTIONS.map(opt => {
-            // 'List' shows everywhere. Multi-col + 1-col show ONLY on sm+
-            const isDesktopOnly = opt.cols !== "list";
-            return (
-              <button
-                key={opt.cols}
-                onClick={() => setGridCols(opt.cols)}
-                title={opt.label}
-                aria-label={opt.label}
-                className={`w-7 h-7 items-center justify-center rounded-md transition-all duration-150 ${
-                  isDesktopOnly ? "hidden sm:flex" : "flex"
-                } ${
-                  gridCols === opt.cols
-                    ? "bg-white/8 text-accent"
-                    : "text-secondary/35 hover:text-accent"
+          {/* Grid / List view toggle */}
+          <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1">
+            {/* Universal Mobile Grid Button (hidden on desktop) */}
+            <button
+              onClick={() => setGridCols(typeof gridCols === "number" ? gridCols : 3)}
+              title="Grid view"
+              aria-label="Grid view"
+              className={`w-7 h-7 flex sm:hidden items-center justify-center rounded-md transition-all duration-150 ${typeof gridCols === "number" ? "bg-white/8 text-accent" : "text-secondary/35 hover:text-accent"
                 }`}
-              >
-                {opt.icon}
-              </button>
-            );
-          })}
+            >
+              <FiGrid strokeWidth={1.5} size={13} />
+            </button>
+
+            {/* Individual Opts */}
+            {GRID_OPTIONS.map(opt => {
+              // 'List' shows everywhere. Multi-col + 1-col show ONLY on sm+
+              const isDesktopOnly = opt.cols !== "list";
+              return (
+                <button
+                  key={opt.cols}
+                  onClick={() => setGridCols(opt.cols)}
+                  title={opt.label}
+                  aria-label={opt.label}
+                  className={`w-7 h-7 items-center justify-center rounded-md transition-all duration-150 ${isDesktopOnly ? "hidden sm:flex" : "flex"
+                    } ${gridCols === opt.cols
+                      ? "bg-white/8 text-accent"
+                      : "text-secondary/35 hover:text-accent"
+                    }`}
+                >
+                  {opt.icon}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </motion.div>
 
       {/* Transaction list / grid */}
       <div className={gridClass}>
         <AnimatePresence mode="popLayout">
-          {filteredBudgets.length === 0
-            ? <EmptyState key="empty" onAdd={() => openForm()} />
-            : gridCols === "list"
-              ? filteredBudgets.map((b, i) => (
-                <BudgetListRow
-                  key={b._id} budget={b} index={i}
-                  onDelete={() => setDeleteItem(b)}
-                  onEdit={() => openForm(b)}
-                />
-              ))
-              : filteredBudgets.map((b, i) => (
-                <BudgetCard
-                  key={b._id} budget={b} index={i}
-                  onDelete={() => setDeleteItem(b)}
-                  onEdit={() => openForm(b)}
-                />
-              ))
+          {isLoadingBudgets && budgets.length === 0
+            ? (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="col-span-full py-16 flex flex-col items-center justify-center"
+                key="loader"
+              >
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-sm font-medium text-secondary/40">Loading transactions...</p>
+              </motion.div>
+            )
+            : filteredBudgets.length === 0
+              ? <EmptyState key="empty" onAdd={() => openForm()} />
+              : gridCols === "list"
+                ? filteredBudgets.slice(0, visibleCount).map((b, i) => (
+                  <BudgetListRow
+                    key={b._id} budget={b} index={i}
+                    onDelete={() => setDeleteItem(b)}
+                    onEdit={() => openForm(b)}
+                  />
+                ))
+                : filteredBudgets.slice(0, visibleCount).map((b, i) => (
+                  <BudgetCard
+                    key={b._id} budget={b} index={i}
+                    onDelete={() => setDeleteItem(b)}
+                    onEdit={() => openForm(b)}
+                  />
+                ))
           }
         </AnimatePresence>
       </div>
+
+      {/* 'Show More' Button */}
+      {!isLoadingBudgets && visibleCount < filteredBudgets.length && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="mt-8 flex justify-center"
+        >
+          <button
+            onClick={() => setVisibleCount(prev => prev + pageSize)}
+            className="px-6 py-2.5 rounded-full bg-white/4 border border-white/10 text-accent hover:bg-white/10 hover:border-white/20 hover:text-primary transition-all font-medium text-sm w-full sm:w-auto"
+          >
+            Load More Transactions
+          </button>
+        </motion.div>
+      )}
 
       {/* ── Delete confirmation modal ── */}
       <AnimatePresence>
@@ -464,7 +520,7 @@ export default function Dashboard() {
                   <FiAlertTriangle className="text-red-400 text-base" strokeWidth={1.5} />
                 </div>
                 <h3 className="font-grotesk text-accent font-semibold text-base mb-1 tracking-tight">Delete transaction?</h3>
-                
+
                 {/* Transaction Details */}
                 <div className="bg-[#0e0e0e] border border-white/6 rounded-lg p-3 my-4">
                   <p className="text-sm font-medium text-accent break-words">{deleteItem.title}</p>

@@ -17,13 +17,13 @@ const inputCls =
   "w-full bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 placeholder:text-secondary/25";
 
 export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
-  const [title,    setTitle]    = useState("");
-  const [amount,   setAmount]   = useState("");
-  const [type,     setType]     = useState("expense");
-  const [note,     setNote]     = useState("");
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState("expense");
+  const [note, setNote] = useState("");
   const [category, setCategory] = useState("miscellaneous");
-  const [date,     setDate]     = useState(() => new Date().toISOString().slice(0, 10));
-  const [errors,   setErrors]   = useState({});
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (editing) {
@@ -45,7 +45,7 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
 
   function validate() {
     const e = {};
-    if (!title.trim())           e.title  = "Title is required";
+    if (!title.trim()) e.title = "Title is required";
     if (!amount || Number(amount) <= 0) e.amount = "Enter a valid amount";
     return e;
   }
@@ -75,22 +75,20 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           <button
             type="button"
             onClick={() => setType("expense")}
-            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
-              type === "expense"
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${type === "expense"
                 ? "bg-red-500/12 text-red-400 border border-red-500/20"
                 : "text-secondary/40 hover:text-accent border border-transparent"
-            }`}
+              }`}
           >
             Expense
           </button>
           <button
             type="button"
             onClick={() => setType("income")}
-            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
-              type === "income"
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${type === "income"
                 ? "bg-emerald-500/12 text-emerald-400 border border-emerald-500/20"
                 : "text-secondary/40 hover:text-accent border border-transparent"
-            }`}
+              }`}
           >
             Income
           </button>

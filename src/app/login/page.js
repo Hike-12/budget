@@ -59,9 +59,9 @@ export default function LoginPage() {
         },
         body: JSON.stringify({ username, password }),
       });
-      
+
       const data = await res.json();
-      
+
       if (res.ok && data.success) {
         toast.success(isLogin ? "Welcome back!" : "Account created successfully!", {
           id: loadingToastId,
@@ -101,7 +101,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-dark pt-20 px-4 relative overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-[100px] pointer-events-none" />
-      
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -110,7 +110,7 @@ export default function LoginPage() {
       >
         <div className="flex flex-col space-y-1.5 p-8 pb-6 border-b border-white/5">
           <div className="w-12 h-12 bg-primary/20 text-primary rounded-md flex items-center justify-center mb-4 border border-primary/30">
-             <FiLock size={20} />
+            <FiLock size={20} />
           </div>
           <h3 className="text-2xl font-grotesk font-bold text-[var(--color-accent)] tracking-tight">
             {isLogin ? "Access Account" : "Create Account"}
@@ -119,13 +119,13 @@ export default function LoginPage() {
             {isLogin ? "Enter your credentials to manage your finances" : "Sign up to track and manage your budget"}
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} noValidate className="p-8 pt-6 flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-[var(--color-accent)]/80">Username</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
-                 <FiUser size={18} />
+                <FiUser size={18} />
               </span>
               <input
                 type="text"
@@ -137,14 +137,14 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-[var(--color-accent)]/80">Password</label>
             </div>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
-                 <FiLock size={18} />
+                <FiLock size={18} />
               </span>
               <input
                 type={showPassword ? "text" : "password"}
@@ -204,12 +204,12 @@ export default function LoginPage() {
               </div>
             </div>
           )}
-          
+
           <AnimatePresence>
             {error && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: "auto" }} 
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2 flex items-center overflow-hidden"
               >
@@ -217,7 +217,7 @@ export default function LoginPage() {
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           <button
             type="submit"
             disabled={isLoading}
@@ -226,12 +226,12 @@ export default function LoginPage() {
             {isLoading ? (isLogin ? "Signing In..." : "Creating Account...") : (isLogin ? "Sign In" : "Sign Up")}
             {!isLoading && <FiArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
           </button>
-          
+
           <div className="mt-4 text-center">
             <button
-               type="button"
-               onClick={toggleMode}
-               className="text-sm text-[var(--color-accent)]/60 hover:text-primary transition-colors"
+              type="button"
+              onClick={toggleMode}
+              className="text-sm text-[var(--color-accent)]/60 hover:text-primary transition-colors"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>

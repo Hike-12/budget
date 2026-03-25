@@ -5,8 +5,8 @@ import { FiCalendar, FiTrash2, FiEdit2, FiArrowUpRight, FiArrowDownRight } from 
 export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
   const isIncome = budget.type === "income";
   const accentColor = isIncome ? "#34d399" : "#f87171";
-  const accentBg    = isIncome ? "rgba(52,211,153,0.08)"  : "rgba(248,113,113,0.08)";
-  const accentBorder= isIncome ? "rgba(52,211,153,0.18)"  : "rgba(248,113,113,0.18)";
+  const accentBg = isIncome ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)";
+  const accentBorder = isIncome ? "rgba(52,211,153,0.18)" : "rgba(248,113,113,0.18)";
 
   const dateStr = new Date(budget.createdAt).toLocaleDateString("en-IN", {
     month: "short", day: "numeric", year: "numeric",

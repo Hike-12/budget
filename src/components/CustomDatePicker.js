@@ -53,7 +53,7 @@ export default function CustomDatePicker({ value, onChange, className = "" }) {
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-10 flex items-center gap-2 bg-[#0e0e0e] border border-white/8 rounded-[10px] px-4 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200"
+        className="w-full h-10 flex items-center gap-2 bg-[#0e0e0e] border border-white/8 rounded-lg px-4 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200"
       >
         <FiCalendar className="text-secondary/40 text-[13px]" aria-hidden="true" />
         <span className={value ? "text-accent" : "text-secondary/30"}>{displayDateStr}</span>

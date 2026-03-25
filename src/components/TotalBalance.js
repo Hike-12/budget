@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import { FiTrendingUp, FiTrendingDown, FiActivity } from "react-icons/fi";
 
 export default function TotalBalance({ budgets }) {
-  const income  = budgets.filter(b => b.type === "income").reduce((a, b) => a + b.amount, 0);
+  const income = budgets.filter(b => b.type === "income").reduce((a, b) => a + b.amount, 0);
   const expense = budgets.filter(b => b.type === "expense").reduce((a, b) => a + b.amount, 0);
-  const total   = income - expense;
+  const total = income - expense;
   const savingsRate = income > 0 ? Math.round(((income - expense) / income) * 100) : null;
 
   return (
