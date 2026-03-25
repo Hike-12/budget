@@ -10,12 +10,19 @@ export default function Navbar() {
   const [username, setUsername] = useState(null);
 
   useEffect(() => {
+    // Initial read
     setUsername(localStorage.getItem("username"));
+
+    // Re-sync whenever any component fires the custom auth-change event
+    const onAuthChange = () => setUsername(localStorage.getItem("username"));
+    window.addEventListener("auth-change", onAuthChange);
+    return () => window.removeEventListener("auth-change", onAuthChange);
   }, []);
 
   const handleAction = () => {
     if (username) {
       localStorage.removeItem("username");
+      window.dispatchEvent(new Event("auth-change"));
       setUsername(null);
       router.push("/login");
     } else {

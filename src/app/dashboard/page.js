@@ -168,8 +168,8 @@ export default function Dashboard() {
   const [isBlurred, setIsBlurred] = useState(true);
 
   const [isLoadingBudgets, setIsLoadingBudgets] = useState(true);
-  const [pageSize, setPageSize] = useState(25);
-  const [visibleCount, setVisibleCount] = useState(25);
+  const [pageSize, setPageSize] = useState(100);
+  const [visibleCount, setVisibleCount] = useState(100);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("username");
@@ -295,6 +295,11 @@ export default function Dashboard() {
     return arr;
   }, [budgets, search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange]);
 
+  // Reset visible count whenever filters/search change
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [search, filterType, filterCategory, sortBy, sortOrder, filterMonth, filterYear, filterRange, pageSize]);
+
   function openForm(budget = null) { setEditing(budget); setShowForm(true); }
   function closeForm() { setShowForm(false); setEditing(null); }
 
@@ -347,8 +352,8 @@ export default function Dashboard() {
         </button>
       </motion.div>
 
-      {/* Balance widget */}
-      <TotalBalance budgets={budgets} />
+      {/* Balance widget — reflects active filters */}
+      <TotalBalance budgets={filteredBudgets} />
 
       {/* Controls row */}
       <motion.div
@@ -389,11 +394,11 @@ export default function Dashboard() {
         transition={{ delay: 0.12 }}
         className="flex items-end justify-between mb-4 gap-4"
       >
-        <h2 className="font-grotesk text-accent/70 text-sm font-semibold tracking-tight flex-shrink-0">
+        <h2 className="font-grotesk text-accent/70 text-sm font-semibold tracking-tight flex-shrink-0 flex items-center gap-2">
           Transactions
-          {!isLoadingBudgets && filteredBudgets.length > 0 && (
-            <span className="ml-2 text-secondary/35 font-normal tabular-nums">
-              {Math.min(visibleCount, filteredBudgets.length)} of {filteredBudgets.length}
+          {!isLoadingBudgets && (
+            <span className="text-secondary/35 font-normal tabular-nums">
+              {filteredBudgets.length}{filteredBudgets.length !== budgets.length && ` of ${budgets.length}`}
             </span>
           )}
         </h2>

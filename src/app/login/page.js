@@ -67,6 +67,7 @@ export default function LoginPage() {
           id: loadingToastId,
         });
         localStorage.setItem("username", data.username || username);
+        window.dispatchEvent(new Event("auth-change"));
         router.push("/dashboard");
       } else {
         setError(data.message || "Invalid credentials");
