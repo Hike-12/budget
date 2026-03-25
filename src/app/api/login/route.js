@@ -1,29 +1,47 @@
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/lib/User";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(1, "Password is required"),
+});
 
 export async function POST(req) {
   try {
-    const { username, password } = await req.json();
+    const body = await req.json();
+
+    // Server-side validation using zod
+    const parsedData = loginSchema.safeParse(body);
+    if (!parsedData.success) {
+      return Response.json({ 
+        success: false, 
+        message: parsedData.error.errors[0].message 
+      }, { status: 400 });
+    }
+
+    const { username, password } = parsedData.data;
     
     await connectToDB();
     
-    const user = await User.findOne({ username: username.toLowerCase().trim() });
+    let normalizedUsername = username.toLowerCase().trim();
+    const user = await User.findOne({ username: normalizedUsername });
     
     if (!user) {
       // Automatic migration fallback for users defined in environment variables
       const LOGIN_USERS = process.env.LOGIN_USERS?.split(',') || [];
       const LOGIN_PASSWORDS = process.env.LOGIN_PASSWORDS?.split(',') || [];
-      const userIndex = LOGIN_USERS.findIndex(u => u.trim().toLowerCase() === username.toLowerCase().trim());
+      const userIndex = LOGIN_USERS.findIndex(u => u.trim().toLowerCase() === normalizedUsername);
       
-      if (userIndex !== -1 && LOGIN_PASSWORDS[userIndex] === password) {
+      if (userIndex !== -1 && LOGIN_PASSWORDS[userIndex].trim() === password) {
         // Migrate user to the DB
         const hashedPassword = await bcrypt.hash(password, 10);
         await User.create({
-          username: username.toLowerCase().trim(),
+          username: normalizedUsername,
           password: hashedPassword
         });
-        return Response.json({ success: true, username: username.toLowerCase().trim() });
+        return Response.json({ success: true, username: normalizedUsername });
       }
       
       return Response.json({ success: false, message: "User not found" }, { status: 401 });

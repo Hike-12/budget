@@ -1,14 +1,27 @@
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/lib/User";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+
+const signupSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 export async function POST(req) {
   try {
-    const { username, password } = await req.json();
+    const body = await req.json();
     
-    if (!username || !password || username.length < 3) {
-      return Response.json({ success: false, message: "Invalid username or password" }, { status: 400 });
+    // Server-side validation using zod
+    const parsedData = signupSchema.safeParse(body);
+    if (!parsedData.success) {
+      return Response.json({ 
+        success: false, 
+        message: parsedData.error.errors[0].message 
+      }, { status: 400 });
     }
+
+    const { username, password } = parsedData.data;
 
     await connectToDB();
     
