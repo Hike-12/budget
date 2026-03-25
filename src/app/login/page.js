@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { FiLock, FiArrowRight, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,22 +18,37 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
     try {
-      const res = await fetch("/api/login", {
+      const endpoint = isLogin ? "/api/login" : "/api/signup";
+      const res = await fetch(endpoint, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ username, password }),
       });
-      if (res.ok) {
-        localStorage.setItem("username", username);
+      
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        localStorage.setItem("username", data.username || username);
         router.push("/dashboard");
       } else {
-        setError("Invalid credentials");
+        setError(data.message || "Invalid credentials");
       }
     } catch (err) {
-      setError("An error occurred");
+      setError("An error occurred. Please try again.");
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   }
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError("");
+    setUsername("");
+    setPassword("");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark pt-20 px-4 relative overflow-hidden">
@@ -47,11 +63,13 @@ export default function LoginPage() {
       >
         <div className="flex flex-col space-y-1.5 p-8 pb-6 border-b border-white/5">
           <div className="w-12 h-12 bg-primary/20 text-primary rounded-md flex items-center justify-center mb-4 border border-primary/30">
-            <FiLock size={20} />
+             <FiLock size={20} />
           </div>
-          <h3 className="text-2xl font-grotesk font-bold text-[var(--color-accent)] tracking-tight">Access Account</h3>
+          <h3 className="text-2xl font-grotesk font-bold text-[var(--color-accent)] tracking-tight">
+            {isLogin ? "Access Account" : "Create Account"}
+          </h3>
           <p className="text-sm text-[var(--color-accent)] opacity-60">
-            Enter your credentials to manage your finances
+            {isLogin ? "Enter your credentials to manage your finances" : "Sign up to track and manage your budget"}
           </p>
         </div>
         
@@ -99,20 +117,37 @@ export default function LoginPage() {
             </div>
           </div>
           
-          {error && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2 flex items-center">
-              {error}
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }} 
+                animate={{ opacity: 1, height: "auto" }} 
+                exit={{ opacity: 0, height: 0 }}
+                className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2 flex items-center overflow-hidden"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           <button
             type="submit"
             disabled={isLoading}
             className="group mt-2 w-full flex items-center justify-center gap-2 bg-primary text-dark font-bold text-sm px-4 py-3 rounded-md hover:bg-white transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? (isLogin ? "Signing In..." : "Creating Account...") : (isLogin ? "Sign In" : "Sign Up")}
             {!isLoading && <FiArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
           </button>
+          
+          <div className="mt-4 text-center">
+            <button
+               type="button"
+               onClick={toggleMode}
+               className="text-sm text-[var(--color-accent)]/60 hover:text-primary transition-colors"
+            >
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            </button>
+          </div>
         </form>
       </motion.div>
     </div>

@@ -12,7 +12,8 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const user = searchParams.get("user");
   if (!user) return Response.json({ error: "User required" }, { status: 400, headers: corsHeaders });
-  const data = await Budget.find({ user }).sort({ createdAt: -1 }).lean();
+  const queryUser = { $regex: new RegExp(`^${user}$`, "i") };
+  const data = await Budget.find({ user: queryUser }).sort({ createdAt: -1 }).lean();
   return Response.json(data, { headers: corsHeaders });
 }
 
@@ -21,10 +22,12 @@ export async function POST(req) {
   const { title, amount, type, note, category, createdAt, user, clientId } = await req.json();
   if (!user) return Response.json({ error: "User required" }, { status: 400, headers: corsHeaders });
 
+  const queryUser = { $regex: new RegExp(`^${user}$`, "i") };
+
   // Idempotent create by (user, clientId)
   if (clientId) {
     const doc = await Budget.findOneAndUpdate(
-      { user, clientId },
+      { user: queryUser, clientId },
       {
         $setOnInsert: {
           title, amount, type, note, category,
@@ -51,7 +54,8 @@ export async function PATCH(req) {
   const { id, clientId, user, ...rest } = await req.json();
   if (!user) return Response.json({ error: "User required" }, { status: 400, headers: corsHeaders });
 
-  const query = id ? { _id: id, user } : clientId ? { clientId, user } : null;
+  const queryUser = { $regex: new RegExp(`^${user}$`, "i") };
+  const query = id ? { _id: id, user: queryUser } : clientId ? { clientId, user: queryUser } : null;
   if (!query) return Response.json({ error: "id or clientId required" }, { status: 400, headers: corsHeaders });
 
   const update = { ...rest };
@@ -67,13 +71,15 @@ export async function DELETE(req) {
   const { id, clientId, user } = await req.json();
   if (!user) return Response.json({ error: "User required" }, { status: 400, headers: corsHeaders });
 
+  const queryUser = { $regex: new RegExp(`^${user}$`, "i") };
+
   // Find the budget to delete
   let budget = null;
   if (id) {
-    budget = await Budget.findOne({ _id: id, user });
-    if (!budget) budget = await Budget.findOne({ clientId: id, user });
+    budget = await Budget.findOne({ _id: id, user: queryUser });
+    if (!budget) budget = await Budget.findOne({ clientId: id, user: queryUser });
   } else if (clientId) {
-    budget = await Budget.findOne({ clientId, user });
+    budget = await Budget.findOne({ clientId, user: queryUser });
   }
 
   if (budget) {
