@@ -3,31 +3,33 @@ import { FaPiggyBank } from "react-icons/fa";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 export default function Navbar() {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [username, setUsername] = useState(null);
 
   useEffect(() => {
     // Initial read
     setUsername(localStorage.getItem("username"));
+    router.prefetch("/login");
 
     // Re-sync whenever any component fires the custom auth-change event
     const onAuthChange = () => setUsername(localStorage.getItem("username"));
     window.addEventListener("auth-change", onAuthChange);
     return () => window.removeEventListener("auth-change", onAuthChange);
-  }, []);
+  }, [router]);
 
   const handleAction = () => {
-    if (username) {
-      localStorage.removeItem("username");
-      window.dispatchEvent(new Event("auth-change"));
-      setUsername(null);
-      router.push("/login");
-    } else {
-      router.push("/login");
-    }
+    startTransition(() => {
+      if (username) {
+        localStorage.removeItem("username");
+        window.dispatchEvent(new Event("auth-change"));
+        setUsername(null);
+      }
+      router.replace("/login");
+    });
   };
 
   return (
@@ -45,6 +47,7 @@ export default function Navbar() {
         </Link>
         <button 
           onClick={handleAction}
+          disabled={isPending}
           className="text-sm font-semibold bg-white/5 hover:bg-white/10 text-accent px-5 py-2.5 rounded-md backdrop-blur-md transition-all border border-white/10 hover:border-white/20 cursor-pointer"
         >
           {username ? "Logout" : "Login"}

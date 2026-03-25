@@ -200,19 +200,37 @@ export default function Dashboard() {
   const [isBlurred, setIsBlurred] = useState(true);
 
   useEffect(() => {
+    router.prefetch("/login");
+  }, [router]);
+
+  useEffect(() => {
     const storedUser = localStorage.getItem("username") ?? "";
     if (!storedUser) {
       if (!authToastRef.current) {
         toast.error("Please login to view dashboard");
         authToastRef.current = true;
       }
-      router.push("/login");
+      router.replace("/login");
       return;
     }
     setUsername(storedUser);
     const storedBlur = localStorage.getItem("isBlurred");
     if (storedBlur !== null) setIsBlurred(storedBlur === "true");
     setIsReady(true);
+  }, [router]);
+
+  useEffect(() => {
+    const onAuthChange = () => {
+      const storedUser = localStorage.getItem("username") ?? "";
+      if (!storedUser) {
+        router.replace("/login");
+        return;
+      }
+      setUsername(storedUser);
+    };
+
+    window.addEventListener("auth-change", onAuthChange);
+    return () => window.removeEventListener("auth-change", onAuthChange);
   }, [router]);
 
   const toggleBlur = useCallback(() => {

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiLock, FiArrowRight, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +30,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+    const storedUser = localStorage.getItem("username");
+    if (storedUser) router.replace("/dashboard");
+  }, [router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -68,7 +74,7 @@ export default function LoginPage() {
         });
         localStorage.setItem("username", data.username || username);
         window.dispatchEvent(new Event("auth-change"));
-        router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
         setError(data.message || "Invalid credentials");
         toast.error(data.message || "Invalid credentials", {
