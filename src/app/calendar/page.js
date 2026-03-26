@@ -294,7 +294,7 @@ export default function CalendarPage() {
               ) : selectedDayData && selectedDayData.items.length > 0 ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gradient-to-br from-emerald-400/10 to-transparent border border-emerald-400/20 p-4 rounded-xl">
+                    <div className="bg-linear-to-br from-emerald-400/10 to-transparent border border-emerald-400/20 p-4 rounded-xl">
                       <p className="text-[10px] items-center uppercase tracking-widest font-semibold text-emerald-400/60 mb-2 whitespace-nowrap">
                         Total Income
                       </p>
@@ -302,7 +302,7 @@ export default function CalendarPage() {
                         +₹{selectedDayData.income.toLocaleString("en-IN")}
                       </p>
                     </div>
-                    <div className="bg-gradient-to-br from-red-400/10 to-transparent border border-red-400/20 p-4 rounded-xl">
+                    <div className="bg-linear-to-br from-red-400/10 to-transparent border border-red-400/20 p-4 rounded-xl">
                       <p className="text-[10px] items-center uppercase tracking-widest font-semibold text-red-400/60 mb-2 whitespace-nowrap">
                         Total Expense
                       </p>
@@ -327,7 +327,7 @@ export default function CalendarPage() {
                         >
                           <div className="flex items-center gap-3 min-w-0 pr-3">
                             <div
-                              className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 font-bold ${
+                              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-bold ${
                                 item.type === "income"
                                   ? "bg-emerald-400/10 text-emerald-400"
                                   : "bg-red-400/10 text-red-400"
@@ -351,7 +351,7 @@ export default function CalendarPage() {
                             </div>
                           </div>
                           <div
-                            className={`text-sm font-bold tabular-nums whitespace-nowrap flex-shrink-0 ${
+                            className={`text-sm font-bold tabular-nums whitespace-nowrap shrink-0 ${
                               item.type === "income"
                                 ? "text-emerald-400"
                                 : "text-red-400"

@@ -129,10 +129,10 @@ export default function LoginPage() {
           <div className="w-12 h-12 bg-primary/20 text-primary rounded-md flex items-center justify-center mb-4 border border-primary/30">
             <FiLock size={20} />
           </div>
-          <h3 className="text-2xl font-grotesk font-bold text-[var(--color-accent)] tracking-tight">
+          <h3 className="text-2xl font-grotesk font-bold text-(--color-accent) tracking-tight">
             {isLogin ? "Access Account" : "Create Account"}
           </h3>
-          <p className="text-sm text-[var(--color-accent)] opacity-60">
+          <p className="text-sm text-(--color-accent) opacity-60">
             {isLogin
               ? "Enter your credentials to manage your finances"
               : "Sign up to track and manage your budget"}
@@ -147,19 +147,19 @@ export default function LoginPage() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="auth-username"
-              className="text-sm font-medium text-[var(--color-accent)]/80"
+              className="text-sm font-medium text-(--color-accent)/80"
             >
               Username
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-accent)/40 pointer-events-none">
                 <FiUser size={18} />
               </span>
               <input
                 id="auth-username"
                 type="text"
                 placeholder="Enter your username"
-                className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-(--color-accent) text-sm placeholder:text-(--color-accent)/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -174,20 +174,20 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="auth-password"
-                className="text-sm font-medium text-[var(--color-accent)]/80"
+                className="text-sm font-medium text-(--color-accent)/80"
               >
                 Password
               </label>
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-accent)/40 pointer-events-none">
                 <FiLock size={18} />
               </span>
               <input
                 id="auth-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-(--color-accent) text-sm placeholder:text-(--color-accent)/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={isLogin ? "current-password" : "new-password"}
@@ -198,7 +198,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 hover:text-[var(--color-accent)]/80 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--color-accent)/40 hover:text-(--color-accent)/80 transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
@@ -211,10 +211,10 @@ export default function LoginPage() {
               {passwordValidations.map((req, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-2 text-xs transition-colors duration-300 ${req.valid ? "text-primary" : "text-[var(--color-accent)]/40"}`}
+                  className={`flex items-center gap-2 text-xs transition-colors duration-300 ${req.valid ? "text-primary" : "text-(--color-accent)/40"}`}
                 >
                   <div
-                    className={`w-3 h-3 flex items-center justify-center rounded-full border ${req.valid ? "border-primary bg-primary/20" : "border-[var(--color-accent)]/30 bg-dark/50"}`}
+                    className={`w-3 h-3 flex items-center justify-center rounded-full border ${req.valid ? "border-primary bg-primary/20" : "border-(--color-accent)/30 bg-dark/50"}`}
                   >
                     {req.valid && (
                       <svg
@@ -239,20 +239,20 @@ export default function LoginPage() {
               <div className="flex items-center justify-between mt-1">
                 <label
                   htmlFor="auth-confirm-password"
-                  className="text-sm font-medium text-[var(--color-accent)]/80"
+                  className="text-sm font-medium text-(--color-accent)/80"
                 >
                   Confirm Password
                 </label>
               </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-accent)/40 pointer-events-none">
                   <FiLock size={18} />
                 </span>
                 <input
                   id="auth-confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-(--color-accent) text-sm placeholder:text-(--color-accent)/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
@@ -267,7 +267,7 @@ export default function LoginPage() {
                       ? "Hide confirm password"
                       : "Show confirm password"
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 hover:text-[var(--color-accent)]/80 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-(--color-accent)/40 hover:text-(--color-accent)/80 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
@@ -320,7 +320,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={toggleMode}
-              className="text-sm text-[var(--color-accent)]/60 hover:text-primary transition-colors"
+              className="text-sm text-(--color-accent)/60 hover:text-primary transition-colors"
             >
               {isLogin
                 ? "Don't have an account? Sign up"

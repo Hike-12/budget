@@ -45,7 +45,9 @@ export function Toaster({ position = "top-right" }) {
   };
 
   return (
-    <div className={`fixed z-[9999] flex flex-col gap-2 pointer-events-none ${posClasses[position]}`}>
+    <div
+      className={`fixed z-9999 flex flex-col gap-2 pointer-events-none ${posClasses[position]}`}
+    >
       <AnimatePresence mode="popLayout">
         {toasts.map((t) => (
           <motion.div
@@ -53,7 +55,11 @@ export function Toaster({ position = "top-right" }) {
             key={t.id}
             initial={{ opacity: 0, y: -24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15, ease: "easeIn" } }}
+            exit={{
+              opacity: 0,
+              scale: 0.96,
+              transition: { duration: 0.15, ease: "easeIn" },
+            }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             role={t.type === "error" ? "alert" : "status"}
             aria-live={t.type === "error" ? "assertive" : "polite"}
@@ -61,13 +67,28 @@ export function Toaster({ position = "top-right" }) {
               t.type === "success"
                 ? "bg-[#0a0a0a]/90 border-emerald-500/20 shadow-emerald-500/10"
                 : t.type === "error"
-                ? "bg-[#0a0a0a]/90 border-red-500/20 shadow-red-500/10"
-                : "bg-[#0a0a0a]/90 border-white/10"
+                  ? "bg-[#0a0a0a]/90 border-red-500/20 shadow-red-500/10"
+                  : "bg-[#0a0a0a]/90 border-white/10"
             }`}
           >
-            {t.type === "success" && <FiCheckCircle className="text-emerald-400 text-lg flex-shrink-0" aria-hidden="true" />}
-            {t.type === "error" && <FiXCircle className="text-red-400 text-lg flex-shrink-0" aria-hidden="true" />}
-            {t.type === "info" && <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" aria-hidden="true" />}
+            {t.type === "success" && (
+              <FiCheckCircle
+                className="text-emerald-400 text-lg shrink-0"
+                aria-hidden="true"
+              />
+            )}
+            {t.type === "error" && (
+              <FiXCircle
+                className="text-red-400 text-lg shrink-0"
+                aria-hidden="true"
+              />
+            )}
+            {t.type === "info" && (
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
+                aria-hidden="true"
+              />
+            )}
             <span className="text-sm font-medium text-accent">{t.message}</span>
           </motion.div>
         ))}

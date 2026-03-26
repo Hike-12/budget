@@ -35,7 +35,7 @@ export default function TotalBalance({ budgets }) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Main balance */}
         <div className="flex items-center gap-4">
-          <div className="w-11 h-11 rounded-lg bg-white/4 border border-white/8 flex items-center justify-center flex-shrink-0">
+          <div className="w-11 h-11 rounded-lg bg-white/4 border border-white/8 flex items-center justify-center shrink-0">
             <FiActivity className="text-primary text-lg" strokeWidth={1.5} />
           </div>
           <div>
@@ -59,9 +59,9 @@ export default function TotalBalance({ budgets }) {
           <div className="hidden lg:block w-px h-10 bg-white/6 mr-2" />
 
           {/* Income */}
-          <div className="flex items-center flex-shrink-0 min-w-[130px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
+          <div className="flex items-center shrink-0 min-w-[130px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
             <FiTrendingUp
-              className="text-emerald-400 text-sm flex-shrink-0"
+              className="text-emerald-400 text-sm shrink-0"
               strokeWidth={1.5}
             />
             <div>
@@ -75,9 +75,9 @@ export default function TotalBalance({ budgets }) {
           </div>
 
           {/* Expense */}
-          <div className="flex items-center flex-shrink-0 min-w-[130px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
+          <div className="flex items-center shrink-0 min-w-[130px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
             <FiTrendingDown
-              className="text-red-400 text-sm flex-shrink-0"
+              className="text-red-400 text-sm shrink-0"
               strokeWidth={1.5}
             />
             <div>
@@ -92,7 +92,7 @@ export default function TotalBalance({ budgets }) {
 
           {/* Savings rate */}
           {savingsRate !== null && (
-            <div className="flex items-center flex-shrink-0 min-w-[100px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
+            <div className="flex items-center shrink-0 min-w-[100px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
               <div>
                 <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
                   Saved

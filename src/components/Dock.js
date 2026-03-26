@@ -147,7 +147,7 @@ export default function Dock() {
             if (e.key === "ArrowUp") setPosition("top");
             if (e.key === "ArrowDown") setPosition("bottom");
           }}
-          className="cursor-grab active:cursor-grabbing p-1.5 text-white/30 hover:text-white/90 transition-colors flex items-center justify-center rounded-lg hover:bg-white/5"
+          className="cursor-grab active:cursor-grabbing p-1.5 text-white/30 hover:text-white/90 transition-colors flex items-center justify-center rounded-lg hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           <MdDragIndicator
             size={20}
@@ -170,6 +170,7 @@ export default function Dock() {
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 aria-label={item.name}
+                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
               >
                 <motion.div
                   whileHover={{

@@ -1,15 +1,27 @@
 "use client";
 import { motion } from "framer-motion";
-import { FiCalendar, FiTrash2, FiEdit2, FiArrowUpRight, FiArrowDownRight } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiTrash2,
+  FiEdit2,
+  FiArrowUpRight,
+  FiArrowDownRight,
+} from "react-icons/fi";
 
 export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
   const isIncome = budget.type === "income";
   const accentColor = isIncome ? "#34d399" : "#f87171";
-  const accentBg = isIncome ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)";
-  const accentBorder = isIncome ? "rgba(52,211,153,0.18)" : "rgba(248,113,113,0.18)";
+  const accentBg = isIncome
+    ? "rgba(52,211,153,0.08)"
+    : "rgba(248,113,113,0.08)";
+  const accentBorder = isIncome
+    ? "rgba(52,211,153,0.18)"
+    : "rgba(248,113,113,0.18)";
 
   const dateStr = new Date(budget.createdAt).toLocaleDateString("en-IN", {
-    month: "short", day: "numeric", year: "numeric",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 
   return (
@@ -18,8 +30,17 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
       initial={{ opacity: 0, y: 12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ type: "spring", stiffness: 350, damping: 26, delay: index * 0.025 }}
-      whileHover={{ y: -4, scale: 1.015, boxShadow: `0 12px 24px -10px ${accentBorder}` }}
+      transition={{
+        type: "spring",
+        stiffness: 350,
+        damping: 26,
+        delay: index * 0.025,
+      }}
+      whileHover={{
+        y: -4,
+        scale: 1.015,
+        boxShadow: `0 12px 24px -10px ${accentBorder}`,
+      }}
       whileTap={{ scale: 0.98, y: 0 }}
       className="group relative h-full will-change-transform"
     >
@@ -39,10 +60,11 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
             {budget.title}
           </span>
           <span
-            className="font-grotesk text-base font-bold tabular-nums flex-shrink-0"
+            className="font-grotesk text-base font-bold tabular-nums shrink-0"
             style={{ color: accentColor }}
           >
-            {isIncome ? "+" : "−"}₹{Number(budget.amount).toLocaleString("en-IN")}
+            {isIncome ? "+" : "−"}₹
+            {Number(budget.amount).toLocaleString("en-IN")}
           </span>
         </div>
 
@@ -52,15 +74,19 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider"
             style={{ background: accentBg, color: accentColor }}
           >
-            {isIncome
-              ? <FiArrowUpRight strokeWidth={2.5} className="text-[9px]" />
-              : <FiArrowDownRight strokeWidth={2.5} className="text-[9px]" />
-            }
+            {isIncome ? (
+              <FiArrowUpRight strokeWidth={2.5} className="text-[9px]" />
+            ) : (
+              <FiArrowDownRight strokeWidth={2.5} className="text-[9px]" />
+            )}
             {budget.type}
           </span>
           <span
             className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wider"
-            style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,232,219,0.5)" }}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              color: "rgba(255,232,219,0.5)",
+            }}
           >
             {budget.category}
           </span>
@@ -76,7 +102,7 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
         </div>
 
         {/* Bottom row: date + actions — pinned to bottom */}
-        <div className="pl-3 flex items-center justify-between pt-2 border-t border-white/[0.05] mt-auto">
+        <div className="pl-3 flex items-center justify-between pt-2 border-t border-white/5 mt-auto">
           <span className="text-[11px] text-secondary/40 flex items-center gap-1.5 font-medium">
             <FiCalendar strokeWidth={1.5} className="text-[10px]" />
             {dateStr}

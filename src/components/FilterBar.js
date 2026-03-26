@@ -89,10 +89,9 @@ export default function FilterBar({
   };
 
   const pillBase =
-    "px-3 h-7 rounded-md text-xs font-medium transition-all duration-150 border border-transparent flex items-center justify-center underline-offset-4";
+    "px-3 h-7 rounded-md text-xs font-medium transition-all duration-150 border border-transparent flex items-center justify-center underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
   const pillActive = "bg-white/10 text-accent font-semibold";
-  const pillInactive =
-    "text-secondary/50 border-transparent hover:text-accent hover:border-white/8";
+  const pillInactive = "text-secondary/50 hover:text-accent hover:bg-white/5";
 
   return (
     <div className="mb-2 flex flex-col gap-3 relative z-[20]">
@@ -104,10 +103,11 @@ export default function FilterBar({
         />
         <input
           type="text"
+          aria-label="Search transactions"
           placeholder="Search transactions…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full h-10 bg-[#0a0a0a] border border-white/8 rounded-lg pl-9 pr-4 py-2 text-accent text-sm placeholder:text-secondary/30 focus:outline-none focus:border-primary/40 transition-all duration-200"
+          className="w-full h-10 bg-[#0a0a0a] border border-white/8 rounded-lg pl-9 pr-4 py-2 text-accent text-sm placeholder:text-secondary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-200"
         />
         <AnimatePresence>
           {search && (
@@ -129,10 +129,16 @@ export default function FilterBar({
       {/* Control strip */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Range pills */}
-        <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9">
+        <div
+          role="radiogroup"
+          aria-label="Date range"
+          className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9"
+        >
           {ranges.map((r) => (
             <button
               key={r.value}
+              role="radio"
+              aria-checked={filterRange === r.value}
               onClick={() => setFilterRange(r.value)}
               className={`${pillBase} ${filterRange === r.value ? pillActive : pillInactive}`}
             >
@@ -142,10 +148,16 @@ export default function FilterBar({
         </div>
 
         {/* Type toggle */}
-        <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9">
+        <div
+          role="radiogroup"
+          aria-label="Transaction type filter"
+          className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9"
+        >
           {["all", "income", "expense"].map((t) => (
             <button
               key={t}
+              role="radio"
+              aria-checked={filterType === t}
               onClick={() => setFilterType(t)}
               className={`${pillBase} capitalize ${
                 filterType === t
@@ -166,6 +178,7 @@ export default function FilterBar({
         <div className="flex items-center gap-1">
           <div className="w-24">
             <CustomSelect
+              aria-label="Sort by column"
               value={sortBy}
               onChange={setSortBy}
               options={[
@@ -177,7 +190,7 @@ export default function FilterBar({
           </div>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="w-9 h-9 flex items-center justify-center text-secondary/60 hover:text-accent transition-colors rounded-lg bg-[#0a0a0a] border border-white/8"
+            className="w-9 h-9 flex items-center justify-center text-secondary/60 hover:text-accent transition-colors rounded-lg bg-[#0a0a0a] border border-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             aria-label="Toggle sort order"
           >
             {sortOrder === "asc" ? (
@@ -191,7 +204,9 @@ export default function FilterBar({
         {/* More filters toggle */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-all duration-150 ${
+          aria-expanded={isExpanded}
+          aria-controls="advanced-filters"
+          className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
             isExpanded
               ? "bg-white/6 border-white/15 text-accent"
               : "bg-[#0a0a0a] border-white/8 text-secondary/50 hover:text-accent hover:border-white/12"
@@ -219,7 +234,7 @@ export default function FilterBar({
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.15 }}
               onClick={clearFilters}
-              className="flex items-center gap-1 px-3 h-9 rounded-lg text-xs font-medium bg-white/3 border border-white/8 text-secondary/50 hover:text-accent hover:border-white/12 transition-all duration-150"
+              className="flex items-center gap-1 px-3 h-9 rounded-lg text-xs font-medium bg-white/3 border border-white/8 text-secondary/50 hover:text-accent hover:border-white/12 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <FiX strokeWidth={2} className="text-xs" />
               Clear
@@ -232,6 +247,7 @@ export default function FilterBar({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
+            id="advanced-filters"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -241,10 +257,14 @@ export default function FilterBar({
             <div className="bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/10 rounded-2xl p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] relative z-[30]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+                  <label
+                    id="cat-label"
+                    className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5"
+                  >
                     Category
                   </label>
                   <CustomSelect
+                    aria-labelledby="cat-label"
                     value={filterCategory}
                     onChange={setFilterCategory}
                     options={categories.map((c) => ({
@@ -257,10 +277,14 @@ export default function FilterBar({
                   />
                 </div>
                 <div>
-                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+                  <label
+                    id="month-label"
+                    className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5"
+                  >
                     Month
                   </label>
                   <CustomSelect
+                    aria-labelledby="month-label"
                     value={String(filterMonth)}
                     onChange={setFilterMonth}
                     options={months.map((m, i) => ({
@@ -270,10 +294,14 @@ export default function FilterBar({
                   />
                 </div>
                 <div>
-                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+                  <label
+                    id="year-label"
+                    className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5"
+                  >
                     Year
                   </label>
                   <CustomSelect
+                    aria-labelledby="year-label"
                     value={String(filterYear)}
                     onChange={setFilterYear}
                     options={[

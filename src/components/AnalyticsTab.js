@@ -133,6 +133,10 @@ export default function AnalyticsTab({ budgets }) {
         .recharts-wrapper, .recharts-wrapper *, .recharts-surface, .recharts-surface * {
           outline: none !important;
         }
+        .recharts-wrapper:focus-visible, .recharts-surface:focus-visible {
+          outline: 2px solid rgba(255, 255, 255, 0.5) !important;
+          border-radius: 8px;
+        }
       `}</style>
 
       {/* 1. Cashflow Overview (Area Chart) */}

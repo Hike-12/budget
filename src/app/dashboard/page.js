@@ -190,7 +190,7 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
     >
       {/* Indicator */}
       <div
-        className="w-2 h-2 rounded-full flex-shrink-0"
+        className="w-2 h-2 rounded-full shrink-0"
         style={{ background: accentColor, opacity: 0.7 }}
       />
 
@@ -207,7 +207,7 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
       </div>
 
       {/* Category tag */}
-      <div className="hidden sm:flex items-center justify-start w-28 flex-shrink-0">
+      <div className="hidden sm:flex items-center justify-start w-28 shrink-0">
         <span
           className="px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide"
           style={{ background: accentBg, color: accentColor }}
@@ -217,13 +217,13 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
       </div>
 
       {/* Date */}
-      <span className="text-[11px] text-secondary/35 flex-shrink-0 hidden md:block w-24 text-right">
+      <span className="text-[11px] text-secondary/35 shrink-0 hidden md:block w-24 text-right">
         {dateStr}
       </span>
 
       {/* Amount */}
       <span
-        className="font-grotesk text-sm font-semibold tabular-nums flex-shrink-0 w-28 text-right"
+        className="font-grotesk text-sm font-semibold tabular-nums shrink-0 w-28 text-right"
         style={{ color: accentColor }}
       >
         {isIncome ? "+" : "−"}₹{Number(budget.amount).toLocaleString("en-IN")}
@@ -521,7 +521,7 @@ export default function Dashboard() {
           onClick={toggleBlur}
           aria-label={isBlurred ? "Show numbers" : "Hide numbers"}
           title={isBlurred ? "Show numbers" : "Hide numbers"}
-          className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/4 border border-white/10 text-secondary/60 hover:text-accent hover:bg-white/10 hover:border-white/15 transition-all duration-200 active:scale-95"
+          className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/4 border border-white/10 text-secondary/60 hover:text-accent hover:bg-white/10 hover:border-white/15 transition-all duration-200 active:scale-95"
         >
           {isBlurred ? (
             <FiEyeOff strokeWidth={1.5} size={18} />
@@ -614,7 +614,7 @@ export default function Dashboard() {
 
             {/* Section header with grid selector */}
             <div className="flex items-end justify-between mb-4 gap-4">
-              <h2 className="font-grotesk text-accent/70 text-sm font-semibold tracking-tight flex-shrink-0 flex items-center gap-2">
+              <h2 className="font-grotesk text-accent/70 text-sm font-semibold tracking-tight shrink-0 flex items-center gap-2">
                 Transactions
                 {!isLoadingBudgets && (
                   <span className="text-secondary/35 font-normal tabular-nums">
@@ -773,7 +773,7 @@ export default function Dashboard() {
                 </h3>
 
                 <div className="bg-[#0e0e0e] border border-white/6 rounded-lg p-3 my-4">
-                  <p className="text-sm font-medium text-accent break-words">
+                  <p className="text-sm font-medium text-accent wrap-break-word">
                     {deleteItem.title}
                   </p>
                   <p className="text-xs text-secondary/60 mt-1 capitalize">

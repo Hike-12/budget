@@ -3,7 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
 
-export default function CustomSelect({ value, onChange, options, placeholder = "Select...", className = "", buttonClassName = "" }) {
+export default function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  className = "",
+  buttonClassName = "",
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -17,7 +26,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(o => o.value === value);
+  const selectedOption = options.find((o) => o.value === value);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
@@ -25,13 +34,18 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between bg-[#0e0e0e] border border-white/8 rounded-lg px-4 h-10 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 ${buttonClassName}`}
+        className={`w-full flex items-center justify-between bg-[#0e0e0e] border border-white/8 rounded-lg px-4 h-10 text-accent text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-200 ${buttonClassName}`}
       >
         <span className={selectedOption ? "text-accent" : "text-secondary/25"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
           <FiChevronDown className="text-secondary/40" />
         </motion.span>
       </button>
@@ -55,11 +69,15 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
                     role="option"
                     aria-selected={isSelected}
                     type="button"
-                    onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-md transition-colors duration-150 ${isSelected
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-md transition-colors duration-150 focus:outline-none focus-visible:bg-white/10 ${
+                      isSelected
                         ? "bg-white/10 text-accent font-semibold"
                         : "text-secondary/60 hover:bg-white/5 hover:text-accent"
-                      }`}
+                    }`}
                   >
                     {opt.label}
                     {isSelected && <FiCheck className="text-primary text-sm" />}
