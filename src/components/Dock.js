@@ -1,15 +1,21 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, useDragControls, useMotionValue, animate } from "framer-motion";
+import {
+  motion,
+  useDragControls,
+  useMotionValue,
+  animate,
+} from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaHome, FaChartPie, FaCalendarAlt } from "react-icons/fa";
+import { FaHome, FaCalendarAlt } from "react-icons/fa";
+import { LuLayoutDashboard } from "react-icons/lu";
 import { MdDragIndicator } from "react-icons/md";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/", icon: FaHome },
-  { name: "Dashboard", href: "/dashboard", icon: FaChartPie },
+  { name: "Dashboard", href: "/dashboard", icon: LuLayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: FaCalendarAlt },
 ];
 
@@ -61,7 +67,8 @@ export default function Dock() {
     const distBottom = innerHeight - py;
 
     const min = Math.min(distLeft, distRight, distTop, distBottom);
-    const newOrientation = (min === distLeft || min === distRight) ? "vertical" : "horizontal";
+    const newOrientation =
+      min === distLeft || min === distRight ? "vertical" : "horizontal";
 
     if (dragOrientation !== newOrientation) {
       setDragOrientation(newOrientation);
@@ -88,18 +95,25 @@ export default function Dock() {
     setDragOrientation(null);
   };
 
-  const currentOrientation = dragOrientation || (position === "left" || position === "right" ? "vertical" : "horizontal");
+  const currentOrientation =
+    dragOrientation ||
+    (position === "left" || position === "right" ? "vertical" : "horizontal");
   const isVertical = currentOrientation === "vertical";
 
   // Pure flex-based alignment inside a fixed full-screen flex container.
   // No CSS transforms, no absolute inset positioning — eliminates all conflicts.
   const getPositionClasses = () => {
     switch (position) {
-      case "left":   return "mr-auto my-auto";
-      case "right":  return "ml-auto my-auto";
-      case "top":    return "mb-auto mx-auto";
-      case "bottom": return "mt-auto mx-auto";
-      default:       return "";
+      case "left":
+        return "mr-auto my-auto";
+      case "right":
+        return "ml-auto my-auto";
+      case "top":
+        return "mb-auto mx-auto";
+      case "bottom":
+        return "mt-auto mx-auto";
+      default:
+        return "";
     }
   };
 
@@ -117,7 +131,9 @@ export default function Dock() {
         dragElastic={0.05}
         style={{ x, y, touchAction: "none", pointerEvents: "auto" }}
         onDrag={handleDrag}
-        onDragStart={() => setDragOrientation(isVertical ? "vertical" : "horizontal")}
+        onDragStart={() =>
+          setDragOrientation(isVertical ? "vertical" : "horizontal")
+        }
         onDragEnd={handleDragEnd}
         className={`w-fit h-fit flex items-center gap-2 p-2 bg-[#0e0e0e]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-2xl ${getPositionClasses()} ${isVertical ? "flex-col" : "flex-row"}`}
       >
@@ -127,17 +143,26 @@ export default function Dock() {
         >
           <MdDragIndicator
             size={20}
-            className={isVertical ? "transition-transform duration-300" : "rotate-90 transition-transform duration-300"}
+            className={
+              isVertical
+                ? "transition-transform duration-300"
+                : "rotate-90 transition-transform duration-300"
+            }
           />
         </div>
 
-        <div className={`flex gap-2 transition-all duration-300 ${isVertical ? "flex-col" : "flex-row"}`}>
+        <div
+          className={`flex gap-2 transition-all duration-300 ${isVertical ? "flex-col" : "flex-row"}`}
+        >
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link key={item.name} href={item.href}>
                 <motion.div
-                  whileHover={{ scale: 1.1, backgroundColor: isActive ? "" : "rgba(255,255,255,0.08)" }}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: isActive ? "" : "rgba(255,255,255,0.08)",
+                  }}
                   whileTap={{ scale: 0.95 }}
                   className={`relative p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${
                     isActive
