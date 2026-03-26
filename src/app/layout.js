@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Dock from "@/components/Dock";
 import { Toaster } from "@/components/sonner";
 import QueryProvider from "@/components/QueryProvider";
 
@@ -68,6 +69,7 @@ export default function RootLayout({ children }) {
           }}
         />
         <Navbar />
+        <Dock />
         <QueryProvider>
           <main className="relative z-10">{children}</main>
           <Toaster position="top-right" />
