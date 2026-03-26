@@ -444,9 +444,33 @@ export default function Dashboard() {
     [budgets],
   );
 
+  // Pre-sort once per dataset change so filter toggles don't keep re-sorting.
+  const sortedBudgetsPrepared = useMemo(() => {
+    const byDateDesc = [...budgetsPrepared].sort(
+      (a, b) => b._createdAtTs - a._createdAtTs,
+    );
+    const byDateAsc = [...byDateDesc].reverse();
+    const byAmountAsc = [...budgetsPrepared].sort(
+      (a, b) => a._amountNum - b._amountNum,
+    );
+    const byAmountDesc = [...byAmountAsc].reverse();
+
+    return {
+      createdAt_desc: byDateDesc,
+      createdAt_asc: byDateAsc,
+      amount_asc: byAmountAsc,
+      amount_desc: byAmountDesc,
+    };
+  }, [budgetsPrepared]);
+
+  const baseSortedBudgets = useMemo(
+    () => sortedBudgetsPrepared[`${sortBy}_${sortOrder}`] ?? budgetsPrepared,
+    [sortedBudgetsPrepared, sortBy, sortOrder, budgetsPrepared],
+  );
+
   /* ── Filtering & sorting: useMemo replaces useEffect ── */
   const filteredBudgets = useMemo(() => {
-    let arr = [...budgetsPrepared];
+    let arr = baseSortedBudgets;
     const now = Date.now();
     const weekAgoTs = now - 7 * 24 * 60 * 60 * 1000;
     const nowDate = new Date(now);
@@ -481,24 +505,12 @@ export default function Dashboard() {
       });
     }
 
-    arr.sort((a, b) =>
-      sortBy === "amount"
-        ? sortOrder === "asc"
-          ? a._amountNum - b._amountNum
-          : b._amountNum - a._amountNum
-        : sortOrder === "asc"
-          ? a._createdAtTs - b._createdAtTs
-          : b._createdAtTs - a._createdAtTs,
-    );
-
     return arr;
   }, [
-    budgetsPrepared,
+    baseSortedBudgets,
     deferredSearch,
     filterType,
     filterCategory,
-    sortBy,
-    sortOrder,
     filterMonth,
     filterYear,
     filterRange,
