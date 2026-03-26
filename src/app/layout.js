@@ -18,10 +18,72 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "Budget Tracker",
-  description: "Minimal, modern budget tracking app",
+  metadataBase: new URL("https://budget-tracker-hike.vercel.app"),
+  title: {
+    default: "Budget Tracker | Smart Personal Finance Tracking",
+    template: "%s | Budget Tracker",
+  },
+  description:
+    "Track expenses and income with a fast, modern budget tracker designed for clarity, control, and smarter personal finance decisions.",
+  applicationName: "Budget Tracker",
+  keywords: [
+    "budget tracker",
+    "expense tracker",
+    "personal finance app",
+    "money management",
+    "income and expense tracking",
+    "financial planning",
+    "budget planner",
+  ],
+  authors: [{ name: "Budget Tracker" }],
+  creator: "Budget Tracker",
+  publisher: "Budget Tracker",
+  category: "finance",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Budget Tracker",
+    title: "Budget Tracker | Smart Personal Finance Tracking",
+    description:
+      "Track expenses and income with a fast, modern budget tracker designed for clarity, control, and smarter personal finance decisions.",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "Budget Tracker logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Budget Tracker | Smart Personal Finance Tracking",
+    description:
+      "Track expenses and income with a fast, modern budget tracker designed for clarity, control, and smarter personal finance decisions.",
+    images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "jG7YdOZ6p0WKMqwpAo-zIen_sTDVyGIcb46vHhpp_8w",
+  },
+  referrer: "origin-when-cross-origin",
   icons: {
     icon: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
