@@ -1,6 +1,18 @@
 import { connectToDB } from "@/lib/mongodb";
 import Budget from "@/lib/Budget";
 import TrashBudget from "@/lib/TrashBudget";
+import { z } from "zod";
+
+const BudgetPayloadSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  amount: z.coerce.number().positive("Amount must be positive"),
+  type: z.enum(["income", "expense"]).catch("expense"),
+  note: z.string().optional().nullable(),
+  category: z.string().catch("miscellaneous"),
+  createdAt: z.union([z.string(), z.date(), z.number()]).optional().nullable(),
+  user: z.string().min(1, "User is required"),
+  clientId: z.string().optional().nullable(),
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +56,25 @@ export async function GET(req) {
 
 export async function POST(req) {
   await connectToDB();
+
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return Response.json(
+      { error: "Invalid JSON" },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  const result = BudgetPayloadSchema.safeParse(body);
+  if (!result.success) {
+    return Response.json(
+      { error: "Validation failed", details: result.error.errors },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
   const {
     title,
     amount,
@@ -53,13 +84,15 @@ export async function POST(req) {
     createdAt,
     user: rawUser,
     clientId,
-  } = await req.json();
+  } = result.data;
+
   const user = normalizeUser(rawUser);
-  if (!user)
+  if (!user) {
     return Response.json(
       { error: "User required" },
       { status: 400, headers: corsHeaders },
     );
+  }
 
   // Idempotent create by (user, clientId)
   if (clientId) {
@@ -97,7 +130,28 @@ export async function POST(req) {
 
 export async function PATCH(req) {
   await connectToDB();
-  const { id, clientId, user: rawUser, ...rest } = await req.json();
+
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return Response.json(
+      { error: "Invalid JSON" },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  const { id, clientId, user: rawUser, ...rest } = body;
+
+  // Validate the updates
+  const patchResult = BudgetPayloadSchema.partial().safeParse(rest);
+  if (!patchResult.success) {
+    return Response.json(
+      { error: "Validation failed", details: patchResult.error.errors },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
   const user = normalizeUser(rawUser);
   if (!user)
     return Response.json(
@@ -112,7 +166,7 @@ export async function PATCH(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const update = { ...rest };
+  const update = { ...patchResult.data };
   if (update.createdAt) update.createdAt = new Date(update.createdAt);
 
   const doc = await Budget.findOneAndUpdate(query, update, {
