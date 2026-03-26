@@ -1,3 +1,6 @@
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://budget-tracker-hike.vercel.app";
+
 export default function robots() {
   return {
     rules: [
@@ -7,7 +10,7 @@ export default function robots() {
         disallow: ["/api/", "/dashboard", "/calendar", "/login"],
       },
     ],
-    sitemap: "https://budget-tracker-hike.vercel.app/sitemap.xml",
-    host: "https://budget-tracker-hike.vercel.app",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

@@ -34,8 +34,9 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      initial={{ y: -40, opacity: 0 }}
+      initial={false}
       animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.2 }}
       aria-label="Main navigation"
       className="fixed top-0 left-0 w-full z-50 bg-transparent backdrop-blur-md border-b border-white/10"
     >
@@ -44,7 +45,7 @@ export default function Navbar() {
           href="/"
           className="flex items-center gap-3 font-grotesk text-2xl text-accent font-bold group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-md p-1 -ml-1"
         >
-          <div className="bg-gradient-to-tr from-primary to-secondary p-2 rounded-md group-hover:scale-110 transition-transform">
+          <div className="bg-linear-to-tr from-primary to-secondary p-2 rounded-md group-hover:scale-110 transition-transform">
             <FaPiggyBank className="text-dark text-xl" />
           </div>
           <span className="tracking-tight">Budgetly</span>

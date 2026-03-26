@@ -7,6 +7,7 @@ import {
   useRef,
   useEffect,
   useDeferredValue,
+  useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +55,8 @@ const GRID_OPTIONS = [
     icon: <LuLayoutGrid strokeWidth={1.5} size={13} />,
   },
 ];
+
+const DEFAULT_PAGE_SIZE = 25;
 
 /* ── API helpers (plain async fns — used by useMutation) ── */
 async function fetchBudgetsApi(username, signal) {
@@ -182,12 +185,7 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
       initial={{ opacity: 0, y: -4, scale: 0.99 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      transition={{
-        type: "spring",
-        stiffness: 350,
-        damping: 26,
-        delay: index * 0.02,
-      }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       whileHover={{ scale: 1.005, backgroundColor: "rgba(255,255,255,0.02)" }}
       whileTap={{ scale: 0.99 }}
       className="group flex items-center gap-4 bg-[#0a0a0a] border border-white/6 rounded-lg px-4 py-3 hover:border-white/12 transition-all duration-150 will-change-transform"
@@ -292,7 +290,7 @@ function BudgetCardSkeleton() {
         <div className="h-4 bg-white/10 rounded w-16" />
         <div className="h-4 bg-white/5 rounded w-20" />
       </div>
-      <div className="pl-3 mt-4 mt-auto border-t border-white/5 pt-2 flex justify-between items-center">
+      <div className="pl-3 mt-auto border-t border-white/5 pt-2 flex justify-between items-center">
         <div className="h-2.5 bg-white/5 rounded w-16" />
         <div className="flex gap-1">
           <div className="w-7 h-7 rounded-lg bg-white/5" />
@@ -308,6 +306,7 @@ export default function Dashboard() {
   const router = useRouter();
   const qc = useQueryClient();
   const authToastRef = useRef(false);
+  const [isFilterPending, startFilterTransition] = useTransition();
 
   /* ── Hydration-safe auth + preferences ──
      Both server and client start with isReady=false / username=""
@@ -376,8 +375,8 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [gridCols, setGridCols] = useState(3);
-  const [pageSize, setPageSize] = useState(100);
-  const [visibleCount, setVisibleCount] = useState(100);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [visibleCount, setVisibleCount] = useState(DEFAULT_PAGE_SIZE);
 
   /* ── Data: useQuery replaces useEffect + fetch ── */
   const { data: budgets = [], isLoading: isLoadingBudgets } = useQuery({
@@ -423,18 +422,35 @@ export default function Dashboard() {
     onError: () => toast.error("Failed to update transaction"),
   });
 
+  const budgetsPrepared = useMemo(
+    () =>
+      budgets.map((b) => {
+        const createdAtTs = new Date(b.createdAt).getTime();
+        return {
+          ...b,
+          _createdAtTs: createdAtTs,
+          _amountNum: Number(b.amount),
+          _searchText:
+            `${b.title ?? ""} ${b.note ?? ""} ${b.category ?? ""}`.toLowerCase(),
+          _monthNum: new Date(createdAtTs).getMonth() + 1,
+          _yearNum: new Date(createdAtTs).getFullYear(),
+        };
+      }),
+    [budgets],
+  );
+
   /* ── Filtering & sorting: useMemo replaces useEffect ── */
   const filteredBudgets = useMemo(() => {
-    let arr = [...budgets];
+    let arr = [...budgetsPrepared];
+    const now = Date.now();
+    const weekAgoTs = now - 7 * 24 * 60 * 60 * 1000;
+    const nowDate = new Date(now);
+    const nowMonth = nowDate.getMonth() + 1;
+    const nowYear = nowDate.getFullYear();
 
     if (deferredSearch.trim()) {
       const q = deferredSearch.trim().toLowerCase();
-      arr = arr.filter(
-        (b) =>
-          b.title?.toLowerCase().includes(q) ||
-          b.note?.toLowerCase().includes(q) ||
-          b.category?.toLowerCase().includes(q),
-      );
+      arr = arr.filter((b) => b._searchText.includes(q));
     }
 
     if (filterType !== "all") arr = arr.filter((b) => b.type === filterType);
@@ -443,31 +459,19 @@ export default function Dashboard() {
 
     if (filterMonth !== "all" || filterYear !== "all") {
       arr = arr.filter((b) => {
-        const d = new Date(b.createdAt);
         const mOk =
-          filterMonth === "all" || d.getMonth() + 1 === Number(filterMonth);
-        const yOk =
-          filterYear === "all" || d.getFullYear() === Number(filterYear);
+          filterMonth === "all" || b._monthNum === Number(filterMonth);
+        const yOk = filterYear === "all" || b._yearNum === Number(filterYear);
         return mOk && yOk;
       });
     }
 
     if (filterRange !== "all") {
-      const now = new Date();
       arr = arr.filter((b) => {
-        const d = new Date(b.createdAt);
-        if (filterRange === "week") {
-          const wa = new Date(now);
-          wa.setDate(now.getDate() - 7);
-          return d >= wa && d <= now;
-        }
+        if (filterRange === "week") return b._createdAtTs >= weekAgoTs;
         if (filterRange === "month")
-          return (
-            d.getMonth() === now.getMonth() &&
-            d.getFullYear() === now.getFullYear()
-          );
-        if (filterRange === "year")
-          return d.getFullYear() === now.getFullYear();
+          return b._monthNum === nowMonth && b._yearNum === nowYear;
+        if (filterRange === "year") return b._yearNum === nowYear;
         return true;
       });
     }
@@ -475,16 +479,16 @@ export default function Dashboard() {
     arr.sort((a, b) =>
       sortBy === "amount"
         ? sortOrder === "asc"
-          ? a.amount - b.amount
-          : b.amount - a.amount
+          ? a._amountNum - b._amountNum
+          : b._amountNum - a._amountNum
         : sortOrder === "asc"
-          ? new Date(a.createdAt) - new Date(b.createdAt)
-          : new Date(b.createdAt) - new Date(a.createdAt),
+          ? a._createdAtTs - b._createdAtTs
+          : b._createdAtTs - a._createdAtTs,
     );
 
     return arr;
   }, [
-    budgets,
+    budgetsPrepared,
     deferredSearch,
     filterType,
     filterCategory,
@@ -495,6 +499,46 @@ export default function Dashboard() {
     filterRange,
   ]);
 
+  const visibleBudgets = useMemo(
+    () => filteredBudgets.slice(0, visibleCount),
+    [filteredBudgets, visibleCount],
+  );
+
+  const loadStep = useMemo(
+    () => (pageSize === "all" ? DEFAULT_PAGE_SIZE : Number(pageSize)),
+    [pageSize],
+  );
+  const shownCount = Math.min(visibleCount, filteredBudgets.length);
+
+  const setFilterTypeSmooth = useCallback(
+    (value) => startFilterTransition(() => setFilterType(value)),
+    [startFilterTransition],
+  );
+  const setSortBySmooth = useCallback(
+    (value) => startFilterTransition(() => setSortBy(value)),
+    [startFilterTransition],
+  );
+  const setSortOrderSmooth = useCallback(
+    (value) => startFilterTransition(() => setSortOrder(value)),
+    [startFilterTransition],
+  );
+  const setFilterCategorySmooth = useCallback(
+    (value) => startFilterTransition(() => setFilterCategory(value)),
+    [startFilterTransition],
+  );
+  const setFilterMonthSmooth = useCallback(
+    (value) => startFilterTransition(() => setFilterMonth(value)),
+    [startFilterTransition],
+  );
+  const setFilterYearSmooth = useCallback(
+    (value) => startFilterTransition(() => setFilterYear(value)),
+    [startFilterTransition],
+  );
+  const setFilterRangeSmooth = useCallback(
+    (value) => startFilterTransition(() => setFilterRange(value)),
+    [startFilterTransition],
+  );
+
   /* ── visibleCount resets when filter keys change (derived, not an effect) ── */
   // We track these as a stable key to compare — no useEffect needed
   const filterKey = `${deferredSearch}|${filterType}|${filterCategory}|${sortBy}|${sortOrder}|${filterMonth}|${filterYear}|${filterRange}|${pageSize}`;
@@ -502,9 +546,17 @@ export default function Dashboard() {
   useEffect(() => {
     if (lastFilterKeyRef.current !== filterKey) {
       lastFilterKeyRef.current = filterKey;
-      setVisibleCount(pageSize);
+      setVisibleCount(
+        pageSize === "all" ? filteredBudgets.length : Number(pageSize),
+      );
     }
-  }, [filterKey, pageSize]);
+  }, [filterKey, pageSize, filteredBudgets.length]);
+
+  useEffect(() => {
+    if (pageSize === "all" && visibleCount !== filteredBudgets.length) {
+      setVisibleCount(filteredBudgets.length);
+    }
+  }, [pageSize, filteredBudgets.length, visibleCount]);
 
   /* ── Stable callbacks ── */
   const openForm = useCallback((budget = null) => {
@@ -678,19 +730,19 @@ export default function Dashboard() {
               <div className="flex-1 min-w-0">
                 <FilterBar
                   filterType={filterType}
-                  setFilterType={setFilterType}
+                  setFilterType={setFilterTypeSmooth}
                   sortBy={sortBy}
-                  setSortBy={setSortBy}
+                  setSortBy={setSortBySmooth}
                   sortOrder={sortOrder}
-                  setSortOrder={setSortOrder}
+                  setSortOrder={setSortOrderSmooth}
                   filterCategory={filterCategory}
-                  setFilterCategory={setFilterCategory}
+                  setFilterCategory={setFilterCategorySmooth}
                   filterMonth={filterMonth}
-                  setFilterMonth={setFilterMonth}
+                  setFilterMonth={setFilterMonthSmooth}
                   filterYear={filterYear}
-                  setFilterYear={setFilterYear}
+                  setFilterYear={setFilterYearSmooth}
                   filterRange={filterRange}
-                  setFilterRange={setFilterRange}
+                  setFilterRange={setFilterRangeSmooth}
                   search={search}
                   setSearch={setSearch}
                 />
@@ -723,15 +775,18 @@ export default function Dashboard() {
 
               <div className="flex items-center gap-3">
                 {/* Page Size Dropdown */}
-                <div className="hidden sm:block w-28">
+                <div className="hidden sm:block w-32">
                   <CustomSelect
                     value={pageSize}
-                    onChange={(val) => setPageSize(Number(val))}
+                    onChange={(val) =>
+                      setPageSize(val === "all" ? "all" : Number(val))
+                    }
                     options={[
                       { value: 25, label: "Show 25" },
                       { value: 50, label: "Show 50" },
                       { value: 75, label: "Show 75" },
                       { value: 100, label: "Show 100" },
+                      { value: "all", label: "Show all" },
                     ]}
                     buttonClassName="!bg-[#0a0a0a] !border-white/8 !px-3 !py-1.5 !h-9 !text-xs !text-secondary/60 hover:!text-accent !rounded-lg"
                   />
@@ -783,47 +838,50 @@ export default function Dashboard() {
               ) : filteredBudgets.length === 0 ? (
                 <EmptyState key="empty" onAdd={openForm} />
               ) : gridCols === "list" ? (
-                filteredBudgets
-                  .slice(0, visibleCount)
-                  .map((b, i) => (
-                    <BudgetListRow
-                      key={b._id}
-                      budget={b}
-                      index={i}
-                      onDelete={() => setDeleteItem(b)}
-                      onEdit={() => openForm(b)}
-                    />
-                  ))
+                visibleBudgets.map((b, i) => (
+                  <BudgetListRow
+                    key={b._id}
+                    budget={b}
+                    index={i}
+                    onDelete={() => setDeleteItem(b)}
+                    onEdit={() => openForm(b)}
+                  />
+                ))
               ) : (
-                filteredBudgets
-                  .slice(0, visibleCount)
-                  .map((b, i) => (
-                    <BudgetCard
-                      key={b._id}
-                      budget={b}
-                      index={i}
-                      onDelete={() => setDeleteItem(b)}
-                      onEdit={() => openForm(b)}
-                    />
-                  ))
+                visibleBudgets.map((b, i) => (
+                  <BudgetCard
+                    key={b._id}
+                    budget={b}
+                    index={i}
+                    onDelete={() => setDeleteItem(b)}
+                    onEdit={() => openForm(b)}
+                  />
+                ))
               )}
             </div>
 
             {/* 'Show More' Button */}
-            {!isLoadingBudgets && visibleCount < filteredBudgets.length && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 flex justify-center"
-              >
-                <button
-                  onClick={() => setVisibleCount((prev) => prev + pageSize)}
-                  className="px-6 py-2.5 rounded-full bg-white/4 border border-white/10 text-accent hover:bg-white/10 hover:border-white/20 hover:text-primary transition-all font-medium text-sm w-full sm:w-auto"
+            {!isLoadingBudgets &&
+              pageSize !== "all" &&
+              visibleCount < filteredBudgets.length && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-8 flex justify-center"
                 >
-                  Load More Transactions
-                </button>
-              </motion.div>
-            )}
+                  <button
+                    onClick={() =>
+                      setVisibleCount((prev) =>
+                        Math.min(prev + loadStep, filteredBudgets.length),
+                      )
+                    }
+                    disabled={isFilterPending}
+                    className="px-6 py-2.5 rounded-full bg-white/4 border border-white/10 text-accent hover:bg-white/10 hover:border-white/20 hover:text-primary transition-all font-medium text-sm w-full sm:w-auto"
+                  >
+                    Load {loadStep} more
+                  </button>
+                </motion.div>
+              )}
           </motion.div>
         </AnimatePresence>
       ) : (

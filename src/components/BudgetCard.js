@@ -30,12 +30,7 @@ export default function BudgetCard({ budget, onDelete, onEdit, index = 0 }) {
       initial={{ opacity: 0, y: 12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      transition={{
-        type: "spring",
-        stiffness: 350,
-        damping: 26,
-        delay: index * 0.025,
-      }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       whileHover={{
         y: -4,
         scale: 1.015,
