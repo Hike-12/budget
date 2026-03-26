@@ -16,6 +16,7 @@ import BudgetForm from "@/components/BudgetForm";
 import TotalBalance from "@/components/TotalBalance";
 import FilterBar from "@/components/FilterBar";
 import CustomSelect from "@/components/CustomSelect";
+import NumberTicker from "@/components/ui/NumberTicker";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/sonner";
 import {
@@ -766,9 +767,19 @@ export default function Dashboard() {
                 Transactions
                 {!isLoadingBudgets && (
                   <span className="text-secondary/35 font-normal tabular-nums">
-                    {filteredBudgets.length}
-                    {filteredBudgets.length !== budgets.length &&
-                      ` of ${budgets.length}`}
+                    <NumberTicker
+                      target={filteredBudgets.length}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="tabular-nums"
+                    />
+                    {filteredBudgets.length !== budgets.length && ` of `}
+                    {filteredBudgets.length !== budgets.length && (
+                      <NumberTicker
+                        target={budgets.length}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="tabular-nums"
+                      />
+                    )}
                   </span>
                 )}
               </h2>

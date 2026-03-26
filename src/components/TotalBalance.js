@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { FiTrendingUp, FiTrendingDown, FiActivity } from "react-icons/fi";
+import NumberTicker from "@/components/ui/NumberTicker";
 
 export default function TotalBalance({ budgets, isLoading }) {
   const { income, expense, total, savingsRate } = useMemo(() => {
@@ -52,7 +53,12 @@ export default function TotalBalance({ budgets, isLoading }) {
                   color: total >= 0 ? "var(--color-accent)" : "#f87171",
                 }}
               >
-                {total < 0 ? "-" : ""}₹{Math.abs(total).toLocaleString("en-IN")}
+                {total < 0 ? "-" : ""}₹
+                <NumberTicker
+                  target={Math.abs(total)}
+                  transition={{ duration: 0.55, ease: "easeOut" }}
+                  className="tabular-nums"
+                />
               </div>
             )}
           </div>
@@ -76,7 +82,12 @@ export default function TotalBalance({ budgets, isLoading }) {
                 <div className="h-5 w-20 bg-white/10 rounded animate-pulse" />
               ) : (
                 <p className="font-grotesk text-emerald-400 font-semibold text-sm tabular-nums">
-                  ₹{income.toLocaleString("en-IN")}
+                  ₹
+                  <NumberTicker
+                    target={income}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="tabular-nums"
+                  />
                 </p>
               )}
             </div>
@@ -96,7 +107,12 @@ export default function TotalBalance({ budgets, isLoading }) {
                 <div className="h-5 w-20 bg-white/10 rounded animate-pulse" />
               ) : (
                 <p className="font-grotesk text-red-400 font-semibold text-sm tabular-nums">
-                  ₹{expense.toLocaleString("en-IN")}
+                  ₹
+                  <NumberTicker
+                    target={expense}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="tabular-nums"
+                  />
                 </p>
               )}
             </div>
@@ -119,7 +135,12 @@ export default function TotalBalance({ budgets, isLoading }) {
                         savingsRate >= 0 ? "var(--color-primary)" : "#f87171",
                     }}
                   >
-                    {savingsRate}%
+                    <NumberTicker
+                      target={savingsRate}
+                      transition={{ duration: 0.45, ease: "easeOut" }}
+                      className="tabular-nums"
+                    />
+                    %
                   </p>
                 )}
               </div>
