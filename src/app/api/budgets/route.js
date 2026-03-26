@@ -43,13 +43,11 @@ export async function GET(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  let data = await Budget.find({ user }).sort({ createdAt: -1 }).lean();
-  // Fallback for legacy records stored with mixed-case usernames.
-  if (data.length === 0) {
-    data = await Budget.find({ user: caseInsensitiveUser(user) })
-      .sort({ createdAt: -1 })
-      .lean();
-  }
+  // Always use case-insensitive match so records saved with any username
+  // casing (e.g. from the mobile app) are always returned together.
+  const data = await Budget.find({ user: caseInsensitiveUser(user) })
+    .sort({ createdAt: -1 })
+    .lean();
 
   return Response.json(data, { headers: corsHeaders });
 }
@@ -97,7 +95,7 @@ export async function POST(req) {
   // Idempotent create by (user, clientId)
   if (clientId) {
     const doc = await Budget.findOneAndUpdate(
-      { user, clientId },
+      { user: caseInsensitiveUser(user), clientId },
       {
         $setOnInsert: {
           title,
@@ -106,7 +104,7 @@ export async function POST(req) {
           note,
           category,
           createdAt: createdAt ? new Date(createdAt) : new Date(),
-          user,
+          user, // always write the normalized lowercase user
           clientId,
         },
       },
@@ -159,7 +157,12 @@ export async function PATCH(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const query = id ? { _id: id, user } : clientId ? { clientId, user } : null;
+  const userQuery = caseInsensitiveUser(user);
+  const query = id
+    ? { _id: id, user: userQuery }
+    : clientId
+      ? { clientId, user: userQuery }
+      : null;
   if (!query)
     return Response.json(
       { error: "id or clientId required" },
@@ -190,24 +193,15 @@ export async function DELETE(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  // Find the budget to delete
+  // Always use case-insensitive user match to handle records saved with any casing.
+  const caseInsensitive = caseInsensitiveUser(user);
   let budget = null;
   if (id) {
-    budget = await Budget.findOne({ _id: id, user });
-    if (!budget) budget = await Budget.findOne({ clientId: id, user });
+    budget = await Budget.findOne({ _id: id, user: caseInsensitive });
+    if (!budget)
+      budget = await Budget.findOne({ clientId: id, user: caseInsensitive });
   } else if (clientId) {
-    budget = await Budget.findOne({ clientId, user });
-  }
-
-  if (!budget) {
-    const caseInsensitive = caseInsensitiveUser(user);
-    if (id) {
-      budget = await Budget.findOne({ _id: id, user: caseInsensitive });
-      if (!budget)
-        budget = await Budget.findOne({ clientId: id, user: caseInsensitive });
-    } else if (clientId) {
-      budget = await Budget.findOne({ clientId, user: caseInsensitive });
-    }
+    budget = await Budget.findOne({ clientId, user: caseInsensitive });
   }
 
   if (budget) {

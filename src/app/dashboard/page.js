@@ -17,7 +17,7 @@ import TotalBalance from "@/components/TotalBalance";
 import FilterBar from "@/components/FilterBar";
 import CustomSelect from "@/components/CustomSelect";
 import NumberTicker from "@/components/ui/NumberTicker";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { toast } from "@/components/sonner";
 import {
   FiPlus,
@@ -325,7 +325,9 @@ export default function Dashboard() {
   }, [router]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("username") ?? "";
+    const storedUser = (localStorage.getItem("username") ?? "")
+      .toLowerCase()
+      .trim();
     if (!storedUser) {
       if (!authToastRef.current) {
         toast.error("Please login to view dashboard");
@@ -342,7 +344,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     const onAuthChange = () => {
-      const storedUser = localStorage.getItem("username") ?? "";
+      const storedUser = (localStorage.getItem("username") ?? "")
+        .toLowerCase()
+        .trim();
       if (!storedUser) {
         router.replace("/login");
         return;
@@ -695,26 +699,52 @@ export default function Dashboard() {
         }}
         className="flex items-center gap-2 mb-6 border-b border-white/10 pb-2"
       >
-        <button
-          onClick={() => setActiveTab("transactions")}
-          className={`px-4 py-2 font-medium text-sm rounded-lg transition-colors ${
-            activeTab === "transactions"
-              ? "bg-white/10 text-accent"
-              : "text-secondary/60 hover:text-white/80 hover:bg-white/5"
-          }`}
-        >
-          Transactions
-        </button>
-        <button
-          onClick={() => setActiveTab("analytics")}
-          className={`px-4 py-2 font-medium text-sm rounded-lg transition-colors ${
-            activeTab === "analytics"
-              ? "bg-white/10 text-accent"
-              : "text-secondary/60 hover:text-white/80 hover:bg-white/5"
-          }`}
-        >
-          Analytics
-        </button>
+        <LayoutGroup id="dashboard-tabs">
+          <button
+            onClick={() => setActiveTab("transactions")}
+            aria-current={activeTab === "transactions" ? "page" : undefined}
+            className={`relative px-4 py-2 font-medium text-sm rounded-lg transition-colors overflow-hidden ${
+              activeTab === "transactions"
+                ? "text-accent"
+                : "text-secondary/60 hover:text-white/80 hover:bg-white/5"
+            }`}
+          >
+            {activeTab === "transactions" && (
+              <motion.span
+                layoutId="dashboard-tab-highlight"
+                className="absolute inset-0 bg-white/10 rounded-lg"
+                transition={{
+                  type: "spring",
+                  bounce: 0,
+                  duration: 0.4,
+                }}
+              />
+            )}
+            <span className="relative z-10">Transactions</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            aria-current={activeTab === "analytics" ? "page" : undefined}
+            className={`relative px-4 py-2 font-medium text-sm rounded-lg transition-colors overflow-hidden ${
+              activeTab === "analytics"
+                ? "text-accent"
+                : "text-secondary/60 hover:text-white/80 hover:bg-white/5"
+            }`}
+          >
+            {activeTab === "analytics" && (
+              <motion.span
+                layoutId="dashboard-tab-highlight"
+                className="absolute inset-0 bg-white/10 rounded-lg"
+                transition={{
+                  type: "spring",
+                  bounce: 0,
+                  duration: 0.4,
+                }}
+              />
+            )}
+            <span className="relative z-10">Analytics</span>
+          </button>
+        </LayoutGroup>
       </motion.div>
 
       {activeTab === "transactions" ? (

@@ -81,7 +81,10 @@ export default function LoginPage() {
             id: loadingToastId,
           },
         );
-        localStorage.setItem("username", data.username || username);
+        localStorage.setItem(
+          "username",
+          (data.username || username).toLowerCase().trim(),
+        );
         window.dispatchEvent(new Event("auth-change"));
         router.replace("/dashboard");
       } else {

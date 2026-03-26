@@ -12,11 +12,14 @@ export default function Navbar() {
 
   useEffect(() => {
     // Initial read
-    setUsername(localStorage.getItem("username"));
+    setUsername((localStorage.getItem("username") || "").toLowerCase().trim());
     router.prefetch("/login");
 
     // Re-sync whenever any component fires the custom auth-change event
-    const onAuthChange = () => setUsername(localStorage.getItem("username"));
+    const onAuthChange = () =>
+      setUsername(
+        (localStorage.getItem("username") || "").toLowerCase().trim(),
+      );
     window.addEventListener("auth-change", onAuthChange);
     return () => window.removeEventListener("auth-change", onAuthChange);
   }, [router]);

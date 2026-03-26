@@ -31,7 +31,9 @@ export default function CalendarPage() {
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("username") || "";
+    const storedUser = (localStorage.getItem("username") || "")
+      .toLowerCase()
+      .trim();
     if (!storedUser) {
       router.replace("/login");
       return;
