@@ -32,8 +32,12 @@ import { LuLayoutGrid, LuGrid2X2, LuGrid3X3 } from "react-icons/lu";
 const AnalyticsTab = dynamic(() => import("@/components/AnalyticsTab"), {
   ssr: false,
   loading: () => (
-    <div className="w-full py-14 flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    <div className="w-full flex flex-col gap-4 flex-1 animate-pulse pb-12 mt-4">
+      <div className="h-[360px] w-full bg-[#0a0a0a] border border-white/5 rounded-2xl" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="h-[300px] w-full bg-[#0a0a0a] border border-white/5 rounded-2xl" />
+        <div className="h-[300px] w-full bg-[#0a0a0a] border border-white/5 rounded-2xl" />
+      </div>
     </div>
   ),
 });
@@ -247,6 +251,55 @@ function BudgetListRow({ budget, onDelete, onEdit, index }) {
         </button>
       </div>
     </motion.div>
+  );
+}
+
+/* ── Skeletons for Loading State ── */
+function BudgetListRowSkeleton() {
+  return (
+    <div className="flex items-center gap-4 bg-[#0a0a0a] border border-white/6 rounded-lg px-4 py-3 animate-pulse">
+      <div className="w-2 h-2 rounded-full shrink-0 bg-white/10" />
+      <div className="flex-1 min-w-0">
+        <div className="h-3.5 bg-white/10 rounded w-32 mb-1.5" />
+        <div className="h-2 bg-white/5 rounded w-20" />
+      </div>
+      <div className="hidden sm:flex items-center justify-start w-28 shrink-0">
+        <div className="h-4 bg-white/10 rounded w-16" />
+      </div>
+      <div className="hidden md:block w-24 shrink-0">
+        <div className="h-2.5 bg-white/10 rounded w-14 ml-auto" />
+      </div>
+      <div className="w-28 shrink-0 flex justify-end">
+        <div className="h-3.5 bg-white/10 rounded w-16" />
+      </div>
+      <div className="flex gap-1">
+        <div className="w-7 h-7 rounded-md bg-white/5" />
+        <div className="w-7 h-7 rounded-md bg-white/5" />
+      </div>
+    </div>
+  );
+}
+
+function BudgetCardSkeleton() {
+  return (
+    <div className="relative bg-[#0a0a0a] border border-white/5 rounded-xl p-4 flex flex-col h-[130px] animate-pulse">
+      <div className="absolute top-3 bottom-3 left-0 w-[3px] rounded-r-full bg-white/10" />
+      <div className="pl-3 flex items-start justify-between gap-3 mb-2 mt-1">
+        <div className="h-3.5 bg-white/10 rounded w-1/2" />
+        <div className="h-3.5 bg-white/10 rounded w-16" />
+      </div>
+      <div className="pl-3 flex items-center gap-2 mt-2">
+        <div className="h-4 bg-white/10 rounded w-16" />
+        <div className="h-4 bg-white/5 rounded w-20" />
+      </div>
+      <div className="pl-3 mt-4 mt-auto border-t border-white/5 pt-2 flex justify-between items-center">
+        <div className="h-2.5 bg-white/5 rounded w-16" />
+        <div className="flex gap-1">
+          <div className="w-7 h-7 rounded-lg bg-white/5" />
+          <div className="w-7 h-7 rounded-lg bg-white/5" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -487,9 +540,49 @@ export default function Dashboard() {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16">
+        <div className="mb-8 flex items-end justify-between gap-4 animate-pulse">
+          <div>
+            <div className="w-20 h-6 bg-white/5 rounded-md mb-3" />
+            <div className="w-48 h-8 bg-white/10 rounded-md" />
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10" />
+        </div>
+
+        {/* Mock TotalBalance */}
+        <div className="mb-8 bg-[#0a0a0a] border border-white/8 rounded-xl p-6 animate-pulse">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-lg bg-white/4 border border-white/8 shrink-0" />
+              <div>
+                <div className="w-20 h-3 bg-white/5 rounded mb-2" />
+                <div className="h-10 w-32 bg-white/10 rounded" />
+              </div>
+            </div>
+            <div className="flex items-stretch gap-2">
+              <div className="min-w-[130px] h-14 bg-white/5 border border-white/6 rounded-lg" />
+              <div className="min-w-[130px] h-14 bg-white/5 border border-white/6 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* Mock Tabs & Controls */}
+        <div className="flex gap-2 mb-6 border-b border-white/10 pb-2 animate-pulse">
+          <div className="w-24 h-9 bg-white/10 rounded-lg" />
+          <div className="w-24 h-9 bg-white/5 rounded-lg" />
+        </div>
+        <div className="flex gap-3 mb-5 animate-pulse">
+          <div className="h-10 flex-1 bg-white/5 rounded-lg" />
+          <div className="w-24 h-10 bg-white/10 rounded-lg" />
+        </div>
+
+        {/* Mock Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <BudgetCardSkeleton />
+          <BudgetCardSkeleton />
+          <BudgetCardSkeleton />
+        </div>
+      </main>
     );
   }
 
@@ -532,7 +625,10 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Balance widget — reflects active filters */}
-      <TotalBalance budgets={filteredBudgets} />
+      <TotalBalance
+        budgets={filteredBudgets}
+        isLoading={isLoadingBudgets && budgets.length === 0}
+      />
 
       {/* Tab Navigation */}
       <motion.div
@@ -676,18 +772,14 @@ export default function Dashboard() {
             {/* Transaction list / grid */}
             <div className={gridClass}>
               {isLoadingBudgets && budgets.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="col-span-full py-16 flex flex-col items-center justify-center"
-                  key="loader"
-                >
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-sm font-medium text-secondary/40">
-                    Loading transactions...
-                  </p>
-                </motion.div>
+                Array.from({ length: gridCols === "list" ? 6 : 8 }).map(
+                  (_, i) =>
+                    gridCols === "list" ? (
+                      <BudgetListRowSkeleton key={`skel-${i}`} />
+                    ) : (
+                      <BudgetCardSkeleton key={`skel-${i}`} />
+                    ),
+                )
               ) : filteredBudgets.length === 0 ? (
                 <EmptyState key="empty" onAdd={openForm} />
               ) : gridCols === "list" ? (

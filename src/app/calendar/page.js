@@ -107,9 +107,16 @@ export default function CalendarPage() {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16 animate-pulse">
+        <div className="mb-8">
+          <div className="w-24 h-6 bg-white/5 rounded-md mb-3" />
+          <div className="w-64 h-8 bg-white/10 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl h-[400px]" />
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl h-[300px] sticky top-24" />
+        </div>
+      </main>
     );
   }
 
@@ -288,8 +295,17 @@ export default function CalendarPage() {
               </h3>
 
               {isLoading ? (
-                <div className="py-12 flex justify-center">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="space-y-6 animate-pulse mt-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-[90px] bg-emerald-400/5 border border-emerald-400/10 rounded-xl" />
+                    <div className="h-[90px] bg-red-400/5 border border-red-400/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-3 pt-2">
+                    <div className="h-3 w-20 bg-white/5 mb-4" />
+                    <div className="h-[68px] w-full bg-white/5 rounded-xl border border-white/5" />
+                    <div className="h-[68px] w-full bg-white/5 rounded-xl border border-white/5" />
+                    <div className="h-[68px] w-full bg-white/5 rounded-xl border border-white/5" />
+                  </div>
                 </div>
               ) : selectedDayData && selectedDayData.items.length > 0 ? (
                 <div className="space-y-6">
