@@ -943,7 +943,7 @@ export default function Dashboard() {
       <AnimatePresence>
         {deleteItem && (
           <ModalBackdrop onClose={() => setDeleteItem(null)}>
-            <div className="max-w-sm mx-auto">
+            <div className="w-full max-w-[540px] mx-auto">
               <div className="bg-[#080808] border border-white/10 rounded-xl p-6 relative">
                 <button
                   onClick={() => setDeleteItem(null)}
