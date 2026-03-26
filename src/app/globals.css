@@ -11,11 +11,11 @@
 }
 :root {
   --color-dark: #000000;
-  --color-primary: #5682B1;
-  --color-secondary: #739EC9;
-  --color-accent: #FFE8DB;
-  --font-sans: 'Figtree', Arial, Helvetica, sans-serif;
-  --font-grotesk: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+  --color-primary: #5682b1;
+  --color-secondary: #739ec9;
+  --color-accent: #ffe8db;
+  --font-sans: var(--font-figtree), Arial, Helvetica, sans-serif;
+  --font-grotesk: var(--font-plus-jakarta), Arial, Helvetica, sans-serif;
 }
 
 body {
@@ -23,12 +23,21 @@ body {
   color: var(--color-accent);
   font-family: var(--font-sans);
   min-height: 100vh;
-  transition: background 0.3s;
+  transition:
+    background 0.25s ease,
+    color 0.2s ease;
 }
 
 a {
   color: var(--color-primary);
-  transition: color 0.2s;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  color: var(--color-accent);
 }
 
 /* ── Hide scrollbars globally ── */
@@ -61,29 +70,35 @@ input::-webkit-inner-spin-button {
 }
 
 /* Firefox */
-input[type=number] {
+input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
 /* ── Input Styling ── */
-input:not([type="checkbox"]):not([type="radio"]), 
+input:not([type="checkbox"]):not([type="radio"]),
 textarea {
   background-color: #0e0e0e;
   color: var(--color-accent);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-family: inherit;
   transition: all 0.2s;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   border-color: rgba(86, 130, 177, 0.5) !important;
   box-shadow: 0 0 0 3px rgba(86, 130, 177, 0.15);
   outline: none;
 }
 
 /* ── Global high-visibility focus for accessibility ── */
-button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: inherit;
@@ -106,7 +121,7 @@ label {
 select {
   background-color: #0e0e0e;
   color: var(--color-accent);
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 select option {
   background-color: #0e0e0e;
@@ -120,7 +135,9 @@ input[type="date"] {
 
 /* ── Privacy Mode (Number Blurring) ── */
 .tabular-nums {
-  transition: filter 0.3s ease, opacity 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .blur-numbers .tabular-nums:not(input) {

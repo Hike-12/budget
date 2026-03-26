@@ -11,14 +11,16 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const signupSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -43,7 +45,9 @@ export default function LoginPage() {
 
     // Validate using zod
     const schema = isLogin ? loginSchema : signupSchema;
-    const dataToValidate = isLogin ? { username, password } : { username, password, confirmPassword };
+    const dataToValidate = isLogin
+      ? { username, password }
+      : { username, password, confirmPassword };
     const parsed = schema.safeParse(dataToValidate);
 
     if (!parsed.success) {
@@ -54,7 +58,9 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    const loadingToastId = toast.loading(isLogin ? "Signing in..." : "Creating account...");
+    const loadingToastId = toast.loading(
+      isLogin ? "Signing in..." : "Creating account...",
+    );
 
     try {
       const endpoint = isLogin ? "/api/login" : "/api/signup";
@@ -69,9 +75,12 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        toast.success(isLogin ? "Welcome back!" : "Account created successfully!", {
-          id: loadingToastId,
-        });
+        toast.success(
+          isLogin ? "Welcome back!" : "Account created successfully!",
+          {
+            id: loadingToastId,
+          },
+        );
         localStorage.setItem("username", data.username || username);
         window.dispatchEvent(new Event("auth-change"));
         router.replace("/dashboard");
@@ -81,12 +90,11 @@ export default function LoginPage() {
           id: loadingToastId,
         });
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
       toast.error("An error occurred. Please try again.", {
         id: loadingToastId,
       });
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -123,13 +131,21 @@ export default function LoginPage() {
             {isLogin ? "Access Account" : "Create Account"}
           </h3>
           <p className="text-sm text-[var(--color-accent)] opacity-60">
-            {isLogin ? "Enter your credentials to manage your finances" : "Sign up to track and manage your budget"}
+            {isLogin
+              ? "Enter your credentials to manage your finances"
+              : "Sign up to track and manage your budget"}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="p-8 pt-6 flex flex-col gap-5">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="p-8 pt-6 flex flex-col gap-5"
+        >
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[var(--color-accent)]/80">Username</label>
+            <label className="text-sm font-medium text-[var(--color-accent)]/80">
+              Username
+            </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
                 <FiUser size={18} />
@@ -139,7 +155,8 @@ export default function LoginPage() {
                 placeholder="Enter your username"
                 className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 value={username}
-                onChange={e => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
                 required
               />
             </div>
@@ -147,7 +164,9 @@ export default function LoginPage() {
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[var(--color-accent)]/80">Password</label>
+              <label className="text-sm font-medium text-[var(--color-accent)]/80">
+                Password
+              </label>
             </div>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
@@ -158,7 +177,8 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 required
               />
               <button
@@ -174,9 +194,24 @@ export default function LoginPage() {
           {!isLogin && (
             <div className="flex flex-col gap-1.5 px-1 py-1">
               {passwordValidations.map((req, i) => (
-                <div key={i} className={`flex items-center gap-2 text-xs transition-colors duration-300 ${req.valid ? "text-primary" : "text-[var(--color-accent)]/40"}`}>
-                  <div className={`w-3 h-3 flex items-center justify-center rounded-full border ${req.valid ? "border-primary bg-primary/20" : "border-[var(--color-accent)]/30 bg-dark/50"}`}>
-                    {req.valid && <svg viewBox="0 0 24 24" fill="none" className="w-2 h-2 text-primary stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                <div
+                  key={i}
+                  className={`flex items-center gap-2 text-xs transition-colors duration-300 ${req.valid ? "text-primary" : "text-[var(--color-accent)]/40"}`}
+                >
+                  <div
+                    className={`w-3 h-3 flex items-center justify-center rounded-full border ${req.valid ? "border-primary bg-primary/20" : "border-[var(--color-accent)]/30 bg-dark/50"}`}
+                  >
+                    {req.valid && (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="w-2 h-2 text-primary stroke-current stroke-2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
                   </div>
                   <span>{req.label}</span>
                 </div>
@@ -187,7 +222,9 @@ export default function LoginPage() {
           {!isLogin && (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between mt-1">
-                <label className="text-sm font-medium text-[var(--color-accent)]/80">Confirm Password</label>
+                <label className="text-sm font-medium text-[var(--color-accent)]/80">
+                  Confirm Password
+                </label>
               </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 pointer-events-none">
@@ -198,7 +235,8 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
                   required={!isLogin}
                 />
                 <button
@@ -206,7 +244,11 @@ export default function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 hover:text-[var(--color-accent)]/80 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  {showConfirmPassword ? (
+                    <FiEyeOff size={18} />
+                  ) : (
+                    <FiEye size={18} />
+                  )}
                 </button>
               </div>
             </div>
@@ -228,10 +270,21 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="group mt-2 w-full flex items-center justify-center gap-2 bg-primary text-dark font-bold text-sm px-4 py-3 rounded-md border border-primary hover:bg-transparent hover:text-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            className="group mt-2 w-full flex items-center justify-center gap-2 bg-primary text-dark font-bold text-sm px-4 py-3 rounded-md border border-primary hover:bg-transparent hover:text-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:hover:text-dark"
           >
-            {isLoading ? (isLogin ? "Signing In..." : "Creating Account...") : (isLogin ? "Sign In" : "Sign Up")}
-            {!isLoading && <FiArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+            {isLoading
+              ? isLogin
+                ? "Signing In..."
+                : "Creating Account..."
+              : isLogin
+                ? "Sign In"
+                : "Sign Up"}
+            {!isLoading && (
+              <FiArrowRight
+                size={18}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            )}
           </button>
 
           <div className="mt-4 text-center">
@@ -240,7 +293,9 @@ export default function LoginPage() {
               onClick={toggleMode}
               className="text-sm text-[var(--color-accent)]/60 hover:text-primary transition-colors"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
             </button>
           </div>
         </form>

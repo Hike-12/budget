@@ -3,23 +3,34 @@ import Navbar from "@/components/Navbar";
 import Dock from "@/components/Dock";
 import { Toaster } from "@/components/sonner";
 import QueryProvider from "@/components/QueryProvider";
+import { Figtree, Plus_Jakarta_Sans } from "next/font/google";
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
+  display: "swap",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
 
 export const metadata = {
   title: "Budget Tracker",
   description: "Minimal, modern budget tracking app",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-        <link rel="icon" href="/logo.png" type="image/png" />
-      </head>
-      <body className="relative min-h-screen w-full overflow-x-hidden text-[var(--color-accent)] bg-dark">
+      <body
+        className={`relative min-h-screen w-full overflow-x-hidden text-[var(--color-accent)] bg-dark ${figtree.variable} ${plusJakartaSans.variable}`}
+      >
         {/* Dashed Bottom Fade Grid */}
         <div
           className="fixed inset-0 z-0 pointer-events-none"

@@ -139,6 +139,15 @@ export default function Dock() {
       >
         <div
           onPointerDown={(e) => dragControls.start(e)}
+          role="button"
+          tabIndex={0}
+          aria-label="Drag dock"
+          onKeyDown={(e) => {
+            if (e.key === "ArrowLeft") setPosition("left");
+            if (e.key === "ArrowRight") setPosition("right");
+            if (e.key === "ArrowUp") setPosition("top");
+            if (e.key === "ArrowDown") setPosition("bottom");
+          }}
           className="cursor-grab active:cursor-grabbing p-1.5 text-white/30 hover:text-white/90 transition-colors flex items-center justify-center rounded-lg hover:bg-white/5"
         >
           <MdDragIndicator
@@ -160,16 +169,17 @@ export default function Dock() {
               <Link key={item.name} href={item.href}>
                 <motion.div
                   whileHover={{
-                    scale: 1.1,
+                    scale: 1.06,
                     backgroundColor: isActive ? "" : "rgba(255,255,255,0.08)",
                   }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.96 }}
                   className={`relative p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${
                     isActive
                       ? "bg-gradient-to-tr from-primary to-secondary text-dark shadow-sm"
-                      : "text-white/60 hover:text-white"
+                      : "text-white/60 hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
                   }`}
                   title={item.name}
+                  aria-label={item.name}
                 >
                   <item.icon size={20} />
                 </motion.div>
