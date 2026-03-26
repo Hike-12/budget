@@ -120,7 +120,7 @@ export default function Dock() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-4 pointer-events-none z-[100] flex"
+      className="fixed inset-4 pointer-events-none z-100 flex"
     >
       <motion.div
         drag
@@ -137,10 +137,9 @@ export default function Dock() {
         onDragEnd={handleDragEnd}
         className={`w-fit h-fit flex items-center gap-2 p-2 bg-[#0e0e0e]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-2xl ${getPositionClasses()} ${isVertical ? "flex-col" : "flex-row"}`}
       >
-        <div
+        <button
+          type="button"
           onPointerDown={(e) => dragControls.start(e)}
-          role="button"
-          tabIndex={0}
           aria-label="Drag dock"
           onKeyDown={(e) => {
             if (e.key === "ArrowLeft") setPosition("left");
@@ -158,7 +157,7 @@ export default function Dock() {
                 : "rotate-90 transition-transform duration-300"
             }
           />
-        </div>
+        </button>
 
         <div
           className={`flex gap-2 transition-all duration-300 ${isVertical ? "flex-col" : "flex-row"}`}
@@ -166,7 +165,12 @@ export default function Dock() {
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.name} href={item.href}>
+              <Link
+                key={item.name}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                aria-label={item.name}
+              >
                 <motion.div
                   whileHover={{
                     scale: 1.06,
@@ -175,11 +179,10 @@ export default function Dock() {
                   whileTap={{ scale: 0.96 }}
                   className={`relative p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "bg-gradient-to-tr from-primary to-secondary text-dark shadow-sm"
+                      ? "bg-linear-to-tr from-primary to-secondary text-dark shadow-sm"
                       : "text-white/60 hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
                   }`}
                   title={item.name}
-                  aria-label={item.name}
                 >
                   <item.icon size={20} />
                 </motion.div>

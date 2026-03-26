@@ -29,8 +29,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`relative min-h-screen w-full overflow-x-hidden text-[var(--color-accent)] bg-dark ${figtree.variable} ${plusJakartaSans.variable}`}
+        className={`relative min-h-screen w-full overflow-x-hidden text-(--color-accent) bg-dark ${figtree.variable} ${plusJakartaSans.variable}`}
       >
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         {/* Dashed Bottom Fade Grid */}
         <div
           className="fixed inset-0 z-0 pointer-events-none"
@@ -82,7 +85,9 @@ export default function RootLayout({ children }) {
         <Navbar />
         <Dock />
         <QueryProvider>
-          <main className="relative z-10">{children}</main>
+          <main id="main-content" tabIndex={-1} className="relative z-10">
+            {children}
+          </main>
           <Toaster position="top-right" />
         </QueryProvider>
       </body>

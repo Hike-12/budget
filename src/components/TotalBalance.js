@@ -1,12 +1,29 @@
 "use client";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { FiTrendingUp, FiTrendingDown, FiActivity } from "react-icons/fi";
 
 export default function TotalBalance({ budgets }) {
-  const income = budgets.filter(b => b.type === "income").reduce((a, b) => a + b.amount, 0);
-  const expense = budgets.filter(b => b.type === "expense").reduce((a, b) => a + b.amount, 0);
-  const total = income - expense;
-  const savingsRate = income > 0 ? Math.round(((income - expense) / income) * 100) : null;
+  const { income, expense, total, savingsRate } = useMemo(() => {
+    let incomeTotal = 0;
+    let expenseTotal = 0;
+
+    for (const budget of budgets) {
+      if (budget.type === "income") incomeTotal += Number(budget.amount) || 0;
+      else expenseTotal += Number(budget.amount) || 0;
+    }
+
+    const netTotal = incomeTotal - expenseTotal;
+    const rate =
+      incomeTotal > 0 ? Math.round((netTotal / incomeTotal) * 100) : null;
+
+    return {
+      income: incomeTotal,
+      expense: expenseTotal,
+      total: netTotal,
+      savingsRate: rate,
+    };
+  }, [budgets]);
 
   return (
     <motion.div
@@ -22,7 +39,9 @@ export default function TotalBalance({ budgets }) {
             <FiActivity className="text-primary text-lg" strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-secondary/50 text-[10px] font-semibold uppercase tracking-[0.15em] mb-1">Net Balance</p>
+            <p className="text-secondary/50 text-[10px] font-semibold uppercase tracking-[0.15em] mb-1">
+              Net Balance
+            </p>
             <div
               className="font-grotesk font-semibold tabular-nums leading-none"
               style={{
@@ -41,9 +60,14 @@ export default function TotalBalance({ budgets }) {
 
           {/* Income */}
           <div className="flex items-center flex-shrink-0 min-w-[130px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
-            <FiTrendingUp className="text-emerald-400 text-sm flex-shrink-0" strokeWidth={1.5} />
+            <FiTrendingUp
+              className="text-emerald-400 text-sm flex-shrink-0"
+              strokeWidth={1.5}
+            />
             <div>
-              <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">Income</p>
+              <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
+                Income
+              </p>
               <p className="font-grotesk text-emerald-400 font-semibold text-sm tabular-nums">
                 ₹{income.toLocaleString("en-IN")}
               </p>
@@ -52,9 +76,14 @@ export default function TotalBalance({ budgets }) {
 
           {/* Expense */}
           <div className="flex items-center flex-shrink-0 min-w-[130px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
-            <FiTrendingDown className="text-red-400 text-sm flex-shrink-0" strokeWidth={1.5} />
+            <FiTrendingDown
+              className="text-red-400 text-sm flex-shrink-0"
+              strokeWidth={1.5}
+            />
             <div>
-              <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">Expenses</p>
+              <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
+                Expenses
+              </p>
               <p className="font-grotesk text-red-400 font-semibold text-sm tabular-nums">
                 ₹{expense.toLocaleString("en-IN")}
               </p>
@@ -65,10 +94,15 @@ export default function TotalBalance({ budgets }) {
           {savingsRate !== null && (
             <div className="flex items-center flex-shrink-0 min-w-[100px] gap-3 bg-white/3 border border-white/6 rounded-lg px-4 py-3">
               <div>
-                <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">Saved</p>
+                <p className="text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
+                  Saved
+                </p>
                 <p
                   className="font-grotesk font-semibold text-sm tabular-nums"
-                  style={{ color: savingsRate >= 0 ? "var(--color-primary)" : "#f87171" }}
+                  style={{
+                    color:
+                      savingsRate >= 0 ? "var(--color-primary)" : "#f87171",
+                  }}
                 >
                   {savingsRate}%
                 </p>

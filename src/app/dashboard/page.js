@@ -1,6 +1,13 @@
 "use client";
-import AnalyticsTab from "@/components/AnalyticsTab";
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  useDeferredValue,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import BudgetCard from "@/components/BudgetCard";
@@ -22,6 +29,15 @@ import {
 } from "react-icons/fi";
 import { LuLayoutGrid, LuGrid2X2, LuGrid3X3 } from "react-icons/lu";
 
+const AnalyticsTab = dynamic(() => import("@/components/AnalyticsTab"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full py-14 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
+
 /* ── Column-count icon mapping ── */
 const GRID_OPTIONS = [
   { cols: "list", label: "List", icon: <FiList strokeWidth={1.5} size={14} /> },
@@ -36,8 +52,8 @@ const GRID_OPTIONS = [
 ];
 
 /* ── API helpers (plain async fns — used by useMutation) ── */
-async function fetchBudgetsApi(username) {
-  const res = await fetch(`/api/budgets?user=${username}`);
+async function fetchBudgetsApi(username, signal) {
+  const res = await fetch(`/api/budgets?user=${username}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch budgets");
   const data = await res.json();
   return Array.isArray(data) ? data : [];
@@ -305,6 +321,7 @@ export default function Dashboard() {
   const [filterYear, setFilterYear] = useState("all");
   const [filterRange, setFilterRange] = useState("all");
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [gridCols, setGridCols] = useState(3);
   const [pageSize, setPageSize] = useState(100);
   const [visibleCount, setVisibleCount] = useState(100);
@@ -312,7 +329,7 @@ export default function Dashboard() {
   /* ── Data: useQuery replaces useEffect + fetch ── */
   const { data: budgets = [], isLoading: isLoadingBudgets } = useQuery({
     queryKey: ["budgets", username],
-    queryFn: () => fetchBudgetsApi(username),
+    queryFn: ({ signal }) => fetchBudgetsApi(username, signal),
     enabled: !!username,
   });
 
@@ -357,8 +374,8 @@ export default function Dashboard() {
   const filteredBudgets = useMemo(() => {
     let arr = [...budgets];
 
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.trim().toLowerCase();
       arr = arr.filter(
         (b) =>
           b.title?.toLowerCase().includes(q) ||
@@ -415,7 +432,7 @@ export default function Dashboard() {
     return arr;
   }, [
     budgets,
-    search,
+    deferredSearch,
     filterType,
     filterCategory,
     sortBy,
@@ -427,14 +444,14 @@ export default function Dashboard() {
 
   /* ── visibleCount resets when filter keys change (derived, not an effect) ── */
   // We track these as a stable key to compare — no useEffect needed
-  const filterKey = `${search}|${filterType}|${filterCategory}|${sortBy}|${sortOrder}|${filterMonth}|${filterYear}|${filterRange}|${pageSize}`;
+  const filterKey = `${deferredSearch}|${filterType}|${filterCategory}|${sortBy}|${sortOrder}|${filterMonth}|${filterYear}|${filterRange}|${pageSize}`;
   const lastFilterKeyRef = useRef(filterKey);
-  if (lastFilterKeyRef.current !== filterKey) {
-    lastFilterKeyRef.current = filterKey;
-    // Direct state mutation during render is safe when guarded by a ref comparison
-    // (React docs: "render phase updates")
-    setVisibleCount(pageSize);
-  }
+  useEffect(() => {
+    if (lastFilterKeyRef.current !== filterKey) {
+      lastFilterKeyRef.current = filterKey;
+      setVisibleCount(pageSize);
+    }
+  }, [filterKey, pageSize]);
 
   /* ── Stable callbacks ── */
   const openForm = useCallback((budget = null) => {

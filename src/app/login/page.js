@@ -112,6 +112,8 @@ export default function LoginPage() {
     { label: "At least 6 characters", valid: password.length >= 6 },
   ];
 
+  const errorId = "auth-form-error";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark pt-20 px-4 relative overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
@@ -143,7 +145,10 @@ export default function LoginPage() {
           className="p-8 pt-6 flex flex-col gap-5"
         >
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[var(--color-accent)]/80">
+            <label
+              htmlFor="auth-username"
+              className="text-sm font-medium text-[var(--color-accent)]/80"
+            >
               Username
             </label>
             <div className="relative">
@@ -151,12 +156,15 @@ export default function LoginPage() {
                 <FiUser size={18} />
               </span>
               <input
+                id="auth-username"
                 type="text"
                 placeholder="Enter your username"
                 className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
+                aria-invalid={!!error}
+                aria-describedby={error ? errorId : undefined}
                 required
               />
             </div>
@@ -164,7 +172,10 @@ export default function LoginPage() {
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[var(--color-accent)]/80">
+              <label
+                htmlFor="auth-password"
+                className="text-sm font-medium text-[var(--color-accent)]/80"
+              >
                 Password
               </label>
             </div>
@@ -173,16 +184,20 @@ export default function LoginPage() {
                 <FiLock size={18} />
               </span>
               <input
+                id="auth-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={isLogin ? "current-password" : "new-password"}
+                aria-invalid={!!error}
+                aria-describedby={error ? errorId : undefined}
                 required
               />
               <button
                 type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 hover:text-[var(--color-accent)]/80 transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
               >
@@ -222,7 +237,10 @@ export default function LoginPage() {
           {!isLogin && (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between mt-1">
-                <label className="text-sm font-medium text-[var(--color-accent)]/80">
+                <label
+                  htmlFor="auth-confirm-password"
+                  className="text-sm font-medium text-[var(--color-accent)]/80"
+                >
                   Confirm Password
                 </label>
               </div>
@@ -231,16 +249,24 @@ export default function LoginPage() {
                   <FiLock size={18} />
                 </span>
                 <input
+                  id="auth-confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className="w-full bg-dark/50 border border-white/10 rounded-md pl-10 pr-10 py-2.5 text-[var(--color-accent)] text-sm placeholder:text-[var(--color-accent)]/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
+                  aria-invalid={!!error}
+                  aria-describedby={error ? errorId : undefined}
                   required={!isLogin}
                 />
                 <button
                   type="button"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-accent)]/40 hover:text-[var(--color-accent)]/80 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
@@ -257,6 +283,9 @@ export default function LoginPage() {
           <AnimatePresence>
             {error && (
               <motion.div
+                id={errorId}
+                role="alert"
+                aria-live="assertive"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}

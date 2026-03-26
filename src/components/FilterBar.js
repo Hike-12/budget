@@ -1,10 +1,24 @@
 "use client";
-import { FiSliders, FiX, FiArrowUp, FiArrowDown, FiChevronDown, FiSearch } from "react-icons/fi";
-import { useState } from "react";
+import {
+  FiSliders,
+  FiX,
+  FiArrowUp,
+  FiArrowDown,
+  FiChevronDown,
+  FiSearch,
+} from "react-icons/fi";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CustomSelect from "@/components/CustomSelect";
 
-const categories = ["all", "school friends", "college friends", "religion", "personal", "miscellaneous"];
+const categories = [
+  "all",
+  "school friends",
+  "college friends",
+  "religion",
+  "personal",
+  "miscellaneous",
+];
 const ranges = [
   { label: "All", value: "all" },
   { label: "Week", value: "week" },
@@ -16,25 +30,54 @@ const selectCls =
   "w-full bg-[#0e0e0e] border border-white/8 rounded-lg px-3 py-2 text-accent text-xs font-medium focus:outline-none focus:border-primary/40 transition-all duration-200 cursor-pointer";
 
 export default function FilterBar({
-  filterType, setFilterType,
-  sortBy, setSortBy,
-  sortOrder, setSortOrder,
-  filterCategory, setFilterCategory,
-  filterMonth, setFilterMonth,
-  filterYear, setFilterYear,
-  filterRange, setFilterRange,
-  search, setSearch,
+  filterType,
+  setFilterType,
+  sortBy,
+  setSortBy,
+  sortOrder,
+  setSortOrder,
+  filterCategory,
+  setFilterCategory,
+  filterMonth,
+  setFilterMonth,
+  filterYear,
+  setFilterYear,
+  filterRange,
+  setFilterRange,
+  search,
+  setSearch,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const months = ["All", "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"];
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
+  const months = useMemo(
+    () => [
+      "All",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ],
+    [],
+  );
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 6 }, (_, i) => currentYear - i);
+  }, []);
 
   const hasActiveFilters =
-    filterType !== "all" || filterCategory !== "all" ||
-    filterMonth !== "all" || filterYear !== "all" || filterRange !== "all";
+    filterType !== "all" ||
+    filterCategory !== "all" ||
+    filterMonth !== "all" ||
+    filterYear !== "all" ||
+    filterRange !== "all";
 
   const clearFilters = () => {
     setFilterType("all");
@@ -47,8 +90,7 @@ export default function FilterBar({
 
   const pillBase =
     "px-3 h-7 rounded-md text-xs font-medium transition-all duration-150 border border-transparent flex items-center justify-center underline-offset-4";
-  const pillActive =
-    "bg-white/10 text-accent font-semibold";
+  const pillActive = "bg-white/10 text-accent font-semibold";
   const pillInactive =
     "text-secondary/50 border-transparent hover:text-accent hover:border-white/8";
 
@@ -64,7 +106,7 @@ export default function FilterBar({
           type="text"
           placeholder="Search transactions…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full h-10 bg-[#0a0a0a] border border-white/8 rounded-lg pl-9 pr-4 py-2 text-accent text-sm placeholder:text-secondary/30 focus:outline-none focus:border-primary/40 transition-all duration-200"
         />
         <AnimatePresence>
@@ -88,7 +130,7 @@ export default function FilterBar({
       <div className="flex items-center gap-2 flex-wrap">
         {/* Range pills */}
         <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9">
-          {ranges.map(r => (
+          {ranges.map((r) => (
             <button
               key={r.value}
               onClick={() => setFilterRange(r.value)}
@@ -101,18 +143,19 @@ export default function FilterBar({
 
         {/* Type toggle */}
         <div className="flex items-center gap-0.5 bg-[#0a0a0a] border border-white/8 rounded-lg p-1 h-9">
-          {["all", "income", "expense"].map(t => (
+          {["all", "income", "expense"].map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`${pillBase} capitalize ${filterType === t
+              className={`${pillBase} capitalize ${
+                filterType === t
                   ? t === "income"
                     ? "bg-emerald-500/15 text-emerald-400"
                     : t === "expense"
                       ? "bg-red-500/15 text-red-400"
                       : pillActive
                   : pillInactive
-                }`}
+              }`}
             >
               {t === "all" ? "All" : t}
             </button>
@@ -127,7 +170,7 @@ export default function FilterBar({
               onChange={setSortBy}
               options={[
                 { label: "Date", value: "createdAt" },
-                { label: "Amount", value: "amount" }
+                { label: "Amount", value: "amount" },
               ]}
               buttonClassName="!bg-[#0a0a0a] !border-white/8 !px-3 !py-1.5 !h-9 !text-xs !text-secondary/60 hover:!text-accent !rounded-lg"
             />
@@ -137,31 +180,39 @@ export default function FilterBar({
             className="w-9 h-9 flex items-center justify-center text-secondary/60 hover:text-accent transition-colors rounded-lg bg-[#0a0a0a] border border-white/8"
             aria-label="Toggle sort order"
           >
-            {sortOrder === "asc"
-              ? <FiArrowUp strokeWidth={2} className="text-[10px]" />
-              : <FiArrowDown strokeWidth={2} className="text-[10px]" />}
+            {sortOrder === "asc" ? (
+              <FiArrowUp strokeWidth={2} className="text-[10px]" />
+            ) : (
+              <FiArrowDown strokeWidth={2} className="text-[10px]" />
+            )}
           </button>
         </div>
 
         {/* More filters toggle */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-all duration-150 ${isExpanded
+          className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium border transition-all duration-150 ${
+            isExpanded
               ? "bg-white/6 border-white/15 text-accent"
               : "bg-[#0a0a0a] border-white/8 text-secondary/50 hover:text-accent hover:border-white/12"
-            }`}
+          }`}
         >
           <FiSliders strokeWidth={1.5} className="text-xs" />
           More
-          <motion.span animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.18 }}>
+          <motion.span
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.18 }}
+          >
             <FiChevronDown strokeWidth={1.5} className="text-xs" />
           </motion.span>
-          {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+          {hasActiveFilters && (
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          )}
         </button>
 
         {/* Clear */}
         <AnimatePresence>
-          {(hasActiveFilters) && (
+          {hasActiveFilters && (
             <motion.button
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -190,27 +241,48 @@ export default function FilterBar({
             <div className="bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/10 rounded-2xl p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] relative z-[30]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Category</label>
+                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+                    Category
+                  </label>
                   <CustomSelect
                     value={filterCategory}
                     onChange={setFilterCategory}
-                    options={categories.map(c => ({ value: c, label: c === "all" ? "All categories" : c.charAt(0).toUpperCase() + c.slice(1) }))}
+                    options={categories.map((c) => ({
+                      value: c,
+                      label:
+                        c === "all"
+                          ? "All categories"
+                          : c.charAt(0).toUpperCase() + c.slice(1),
+                    }))}
                   />
                 </div>
                 <div>
-                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Month</label>
+                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+                    Month
+                  </label>
                   <CustomSelect
                     value={String(filterMonth)}
                     onChange={setFilterMonth}
-                    options={months.map((m, i) => ({ value: String(i === 0 ? "all" : i), label: m }))}
+                    options={months.map((m, i) => ({
+                      value: String(i === 0 ? "all" : i),
+                      label: m,
+                    }))}
                   />
                 </div>
                 <div>
-                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Year</label>
+                  <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+                    Year
+                  </label>
                   <CustomSelect
                     value={String(filterYear)}
                     onChange={setFilterYear}
-                    options={[{ value: "all", label: "All years" }, ...years.map(y => ({ value: String(y), label: String(y) }))]}
+                    options={[
+                      { value: "all", label: "All years" },
+                      ...years.map((y) => ({
+                        value: String(y),
+                        label: String(y),
+                      })),
+                    ]}
                   />
                 </div>
               </div>
