@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-figtree), sans-serif;
+  --font-grotesk: var(--font-plus-jakarta), sans-serif;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -16,6 +21,7 @@
     scroll-behavior: auto !important;
   }
 }
+
 :root {
   --color-dark: #000000;
   --color-primary: #5682b1;
@@ -53,13 +59,16 @@ a {
   height: 0px;
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: transparent;
 }
 
 body {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
 }
 
 .thin-scrollbar::-webkit-scrollbar {
@@ -152,6 +161,7 @@ select {
   color: var(--color-accent);
   border-color: rgba(255, 255, 255, 0.1);
 }
+
 select option {
   background-color: #0e0e0e;
   color: var(--color-accent);
