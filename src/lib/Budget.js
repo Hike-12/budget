@@ -17,6 +17,7 @@ const BudgetSchema = new mongoose.Schema({
     default: "miscellaneous",
   },
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
   user: String,
   // NEW: stable client-generated id from the app
   clientId: { type: String, index: true },

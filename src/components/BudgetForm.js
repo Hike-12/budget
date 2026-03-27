@@ -1,6 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { FiPlus, FiSave, FiTag, FiFileText, FiAlignLeft, FiHash } from "react-icons/fi";
+import {
+  FiPlus,
+  FiSave,
+  FiTag,
+  FiFileText,
+  FiAlignLeft,
+  FiHash,
+} from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import CustomSelect from "@/components/CustomSelect";
 import CustomDatePicker from "@/components/CustomDatePicker";
@@ -22,6 +29,7 @@ const defaultState = (editing) => ({
   type: editing?.type ?? "expense",
   note: editing?.note ?? "",
   category: editing?.category ?? "miscellaneous",
+  clientId: editing?.clientId ?? editing?._id ?? null,
   date: editing?.createdAt
     ? new Date(editing.createdAt).toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10),
@@ -38,39 +46,51 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
     setErrors({});
   }, [editing]);
 
-  const set = useCallback((field) => (value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setErrors(prev => ({ ...prev, [field]: null }));
-  }, []);
+  const set = useCallback(
+    (field) => (value) => {
+      setForm((prev) => ({ ...prev, [field]: value }));
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    },
+    [],
+  );
 
   const validate = useCallback(() => {
     const e = {};
     if (!form.title.trim()) e.title = "Title is required";
-    if (!form.amount || Number(form.amount) <= 0) e.amount = "Enter a valid amount";
+    if (!form.amount || Number(form.amount) <= 0)
+      e.amount = "Enter a valid amount";
     return e;
   }, [form.title, form.amount]);
 
-  const handleSubmit = useCallback((evt) => {
-    evt.preventDefault();
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
-    const payload = {
-      title: form.title.trim(),
-      amount: Number(form.amount),
-      type: form.type,
-      note: form.note,
-      category: form.category,
-      createdAt: new Date(form.date),
-    };
-    if (editing) {
-      onEdit({ id: editing._id, ...payload });
-      setEditing(null);
-    } else {
-      onAdd(payload);
-    }
-    setForm(defaultState(null));
-    setErrors({});
-  }, [form, editing, validate, onAdd, onEdit, setEditing]);
+  const handleSubmit = useCallback(
+    (evt) => {
+      evt.preventDefault();
+      const e = validate();
+      if (Object.keys(e).length) {
+        setErrors(e);
+        return;
+      }
+      const payload = {
+        title: form.title.trim(),
+        amount: Number(form.amount),
+        type: form.type,
+        note: form.note,
+        category: form.category,
+        clientId: form.clientId,
+        createdAt: new Date(form.date),
+        updatedAt: new Date(),
+      };
+      if (editing) {
+        onEdit({ id: editing._id, ...payload });
+        setEditing(null);
+      } else {
+        onAdd(payload);
+      }
+      setForm(defaultState(null));
+      setErrors({});
+    },
+    [form, editing, validate, onAdd, onEdit, setEditing],
+  );
 
   return (
     <div className="bg-[#080808] border border-white/10 rounded-xl p-5 sm:p-7 md:p-8">
@@ -85,18 +105,22 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           <button
             type="button"
             onClick={() => set("type")("expense")}
-            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${form.type === "expense"
-              ? "bg-red-500/12 text-red-400 border border-red-500/20"
-              : "text-secondary/40 hover:text-accent border border-transparent"}`}
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+              form.type === "expense"
+                ? "bg-red-500/12 text-red-400 border border-red-500/20"
+                : "text-secondary/40 hover:text-accent border border-transparent"
+            }`}
           >
             Expense
           </button>
           <button
             type="button"
             onClick={() => set("type")("income")}
-            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${form.type === "income"
-              ? "bg-emerald-500/12 text-emerald-400 border border-emerald-500/20"
-              : "text-secondary/40 hover:text-accent border border-transparent"}`}
+            className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+              form.type === "income"
+                ? "bg-emerald-500/12 text-emerald-400 border border-emerald-500/20"
+                : "text-secondary/40 hover:text-accent border border-transparent"
+            }`}
           >
             Income
           </button>
@@ -113,12 +137,17 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
               placeholder="e.g. Chai with friends"
               className={`${inputCls} ${errors.title ? "border-red-500/40" : ""}`}
               value={form.title}
-              onChange={e => set("title")(e.target.value)}
+              onChange={(e) => set("title")(e.target.value)}
             />
             <AnimatePresence>
               {errors.title && (
-                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="text-red-400/80 text-xs mt-1 ml-0.5">{errors.title}
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-400/80 text-xs mt-1 ml-0.5"
+                >
+                  {errors.title}
                 </motion.p>
               )}
             </AnimatePresence>
@@ -130,20 +159,28 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
               <FiHash strokeWidth={2} className="text-[10px]" /> Amount
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary/30 text-sm pointer-events-none">₹</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary/30 text-sm pointer-events-none">
+                ₹
+              </span>
               <input
                 type="number"
                 placeholder="0"
                 className={`${inputCls} pl-8 tabular-nums ${errors.amount ? "border-red-500/40" : ""}`}
                 value={form.amount}
-                onChange={e => set("amount")(e.target.value)}
-                min="0" step="0.01"
+                onChange={(e) => set("amount")(e.target.value)}
+                min="0"
+                step="0.01"
               />
             </div>
             <AnimatePresence>
               {errors.amount && (
-                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="text-red-400/80 text-xs mt-1 ml-0.5">{errors.amount}
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-400/80 text-xs mt-1 ml-0.5"
+                >
+                  {errors.amount}
                 </motion.p>
               )}
             </AnimatePresence>
@@ -157,13 +194,18 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
             <CustomSelect
               value={form.category}
               onChange={set("category")}
-              options={categories.map(c => ({ value: c, label: c.charAt(0).toUpperCase() + c.slice(1) }))}
+              options={categories.map((c) => ({
+                value: c,
+                label: c.charAt(0).toUpperCase() + c.slice(1),
+              }))}
             />
           </div>
 
           {/* Date */}
           <div>
-            <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Date</label>
+            <label className="block text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+              Date
+            </label>
             <CustomDatePicker value={form.date} onChange={set("date")} />
           </div>
 
@@ -171,13 +213,15 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           <div className="sm:col-span-2">
             <label className="flex items-center gap-1.5 text-secondary/40 text-[10px] font-semibold uppercase tracking-widest mb-1.5">
               <FiFileText strokeWidth={2} className="text-[10px]" /> Note
-              <span className="text-white/15 normal-case tracking-normal font-normal">(optional)</span>
+              <span className="text-white/15 normal-case tracking-normal font-normal">
+                (optional)
+              </span>
             </label>
             <textarea
               placeholder="Add context…"
               className={`${inputCls} resize-none`}
               value={form.note}
-              onChange={e => set("note")(e.target.value)}
+              onChange={(e) => set("note")(e.target.value)}
               rows={2}
             />
           </div>

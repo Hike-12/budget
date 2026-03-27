@@ -59,6 +59,36 @@ const GRID_OPTIONS = [
 
 const DEFAULT_PAGE_SIZE = 25;
 
+function makeClientId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return `web-${crypto.randomUUID()}`;
+  }
+  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function makeIdempotencyKey(prefix, username, stableId = "") {
+  const nonce =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}:${String(username).toLowerCase()}:${stableId}:${nonce}`;
+}
+
+async function fetchWithRetry(url, init, retries = 3, baseDelay = 250) {
+  let lastErr;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (err) {
+      lastErr = err;
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, baseDelay * 2 ** i));
+      }
+    }
+  }
+  throw lastErr ?? new Error("Network request failed");
+}
+
 /* ── API helpers (plain async fns — used by useMutation) ── */
 async function fetchBudgetsApi(username, signal) {
   const res = await fetch(`/api/budgets?user=${username}`, { signal });
@@ -68,30 +98,73 @@ async function fetchBudgetsApi(username, signal) {
 }
 
 async function addBudgetApi({ budget, username }) {
-  const res = await fetch("/api/budgets", {
+  const normalizedUser = String(username || "")
+    .toLowerCase()
+    .trim();
+  const clientId = budget.clientId || makeClientId();
+  const payload = {
+    ...budget,
+    user: normalizedUser,
+    clientId,
+    updatedAt: budget.updatedAt || new Date().toISOString(),
+  };
+
+  const res = await fetchWithRetry("/api/budgets", {
     method: "POST",
-    body: JSON.stringify({ ...budget, user: username }),
-    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": makeIdempotencyKey("add", normalizedUser, clientId),
+    },
   });
   if (!res.ok) throw new Error("Failed to add transaction");
   return res.json();
 }
 
 async function deleteBudgetApi({ item, username }) {
-  const res = await fetch("/api/budgets", {
+  const normalizedUser = String(username || "")
+    .toLowerCase()
+    .trim();
+  const stableId = item.clientId || item._id;
+  const res = await fetchWithRetry("/api/budgets", {
     method: "DELETE",
-    body: JSON.stringify({ id: item._id, user: username }),
-    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: item._id,
+      clientId: item.clientId,
+      user: normalizedUser,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": makeIdempotencyKey(
+        "delete",
+        normalizedUser,
+        stableId,
+      ),
+    },
   });
   if (!res.ok) throw new Error("Failed to delete transaction");
   return res.json();
 }
 
 async function editBudgetApi({ budget, username }) {
-  const res = await fetch("/api/budgets", {
+  const normalizedUser = String(username || "")
+    .toLowerCase()
+    .trim();
+  const stableId = budget.clientId || budget.id || budget._id || makeClientId();
+  const payload = {
+    ...budget,
+    clientId: budget.clientId || stableId,
+    updatedAt: new Date().toISOString(),
+    user: normalizedUser,
+  };
+
+  const res = await fetchWithRetry("/api/budgets", {
     method: "PATCH",
-    body: JSON.stringify({ ...budget, user: username }),
-    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": makeIdempotencyKey("edit", normalizedUser, stableId),
+    },
   });
   if (!res.ok) throw new Error("Failed to update transaction");
   return res.json();

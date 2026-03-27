@@ -5,14 +5,17 @@ const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) throw new Error("Please define MONGODB_URI in .env.local");
 
 let cached = global.mongoose;
-if (!cached) cached = global.mongoose = { conn: null, promise: null, migrated: false };
+if (!cached)
+  cached = global.mongoose = { conn: null, promise: null, migrated: false };
 
 export async function connectToDB() {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      bufferCommands: false,
-    }).then(m => m);
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        bufferCommands: false,
+      })
+      .then((m) => m);
   }
   cached.conn = await cached.promise;
 
@@ -23,12 +26,19 @@ export async function connectToDB() {
     cached.migrated = true;
     try {
       const db = cached.conn.connection.db;
-      const result = await db.collection("budgets").updateMany(
-        { clientId: { $type: "null" } },
-        { $unset: { clientId: "" } }
-      );
+      await db
+        .collection("idempotencyKeys")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+      const result = await db
+        .collection("budgets")
+        .updateMany(
+          { clientId: { $type: "null" } },
+          { $unset: { clientId: "" } },
+        );
       if (result.modifiedCount > 0) {
-        console.log(`[Migration] Cleaned up ${result.modifiedCount} legacy clientId:null entries.`);
+        console.log(
+          `[Migration] Cleaned up ${result.modifiedCount} legacy clientId:null entries.`,
+        );
       }
     } catch (_) {
       // non-fatal — best effort cleanup
