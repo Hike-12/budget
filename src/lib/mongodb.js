@@ -19,30 +19,19 @@ export async function connectToDB() {
   }
   cached.conn = await cached.promise;
 
-  // One-time migration: remove explicit clientId:null stored by old schema default.
-  // The sparse unique index only ignores *absent* fields, not null fields —
-  // so documents with clientId:null were colliding with each other on add.
-  if (!cached.migrated) {
-    cached.migrated = true;
-    try {
-      const db = cached.conn.connection.db;
-      await db
-        .collection("idempotencyKeys")
-        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-      const result = await db
-        .collection("budgets")
-        .updateMany(
-          { clientId: { $type: "null" } },
-          { $unset: { clientId: "" } },
-        );
-      if (result.modifiedCount > 0) {
-        console.log(
-          `[Migration] Cleaned up ${result.modifiedCount} legacy clientId:null entries.`,
-        );
-      }
-    } catch (_) {
-      // non-fatal — best effort cleanup
-    }
+  // Ensure production-ready indexes for idempotency
+  try {
+    const db = cached.conn.connection.db;
+    // TTL index for auto-expiry
+    await db
+      .collection("idempotencyKeys")
+      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    // UNIQUE index for the key itself (The actual shield)
+    await db
+      .collection("idempotencyKeys")
+      .createIndex({ key: 1 }, { unique: true });
+  } catch (err) {
+    console.warn("Index ensuring failed (likely already exists):", err.message);
   }
 
   return cached.conn;

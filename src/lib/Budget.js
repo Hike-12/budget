@@ -19,11 +19,19 @@ const BudgetSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   user: String,
-  // NEW: stable client-generated id from the app
-  clientId: { type: String, index: true },
+  // stable client-generated id for offline-first dedup
+  clientId: { type: String, default: null },
 });
 
-BudgetSchema.index({ user: 1, clientId: 1 }, { unique: true, sparse: true });
+// Atomic dedup: only one document per (user, clientId) when clientId is set.
+// partialFilterExpression replaces legacy sparse — more explicit and reliable.
+BudgetSchema.index(
+  { clientId: 1, user: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { clientId: { $type: "string" } },
+  },
+);
 BudgetSchema.index({ user: 1, createdAt: -1 });
 
 export default mongoose.models.Budget || mongoose.model("Budget", BudgetSchema);

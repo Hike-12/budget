@@ -168,20 +168,17 @@ export async function POST(req) {
   const createdAtDate = normalizeDate(createdAt);
   const updatedAtDate = normalizeDate(updatedAt, createdAtDate);
 
-  // Idempotent create by (user, clientId)
+  // Idempotent create by (user, clientId) — fully atomic to prevent duplicates
   if (clientId) {
-    const existing = await Budget.findOne({
-      user: caseInsensitiveUser(user),
-      clientId,
-    }).lean();
-
     let doc;
-    if (existing) {
-      const existingUpdatedAt = normalizeDate(existing.updatedAt, new Date(0));
-      if (updatedAtDate >= existingUpdatedAt) {
-        doc = await Budget.findOneAndUpdate(
-          { _id: existing._id },
-          {
+    try {
+      // Atomic upsert: either inserts a new doc or returns the existing one.
+      // $setOnInsert only writes fields when a new document is created,
+      // preventing overwrites of a newer server version on re-sync.
+      doc = await Budget.findOneAndUpdate(
+        { clientId, user },
+        {
+          $setOnInsert: {
             title,
             amount,
             type,
@@ -192,23 +189,44 @@ export async function POST(req) {
             user,
             clientId,
           },
-          { new: true },
-        ).lean();
+        },
+        { upsert: true, new: true, rawResult: false },
+      ).lean();
+    } catch (err) {
+      // E11000 duplicate key — another concurrent request already created it
+      if (err?.code === 11000) {
+        doc = await Budget.findOne({
+          clientId,
+          user: caseInsensitiveUser(user),
+        }).lean();
       } else {
-        doc = existing;
+        throw err;
       }
-    } else {
-      doc = await Budget.create({
-        title,
-        amount,
-        type,
-        note,
-        category,
-        createdAt: createdAtDate,
-        updatedAt: updatedAtDate,
-        user,
-        clientId,
-      });
+    }
+
+    // If the incoming payload is newer, update the existing doc
+    if (doc) {
+      const existingUpdatedAt = normalizeDate(doc.updatedAt, new Date(0));
+      if (updatedAtDate > existingUpdatedAt) {
+        doc =
+          (await Budget.findOneAndUpdate(
+            { _id: doc._id, updatedAt: { $lte: updatedAtDate } },
+            {
+              $set: {
+                title,
+                amount,
+                type,
+                note,
+                category,
+                createdAt: createdAtDate,
+                updatedAt: updatedAtDate,
+                user,
+                clientId,
+              },
+            },
+            { new: true },
+          ).lean()) ?? doc;
+      }
     }
 
     if (idemScope) await storeIdempotentResponse(idemScope, 200, doc);
