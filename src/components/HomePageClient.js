@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { FaArrowRight } from "react-icons/fa";
 import bgDecor from "../../public/tree.png";
+import FallingLeaves from "./FallingLeaves";
 
 export default function HomePageClient() {
   return (
@@ -12,6 +13,7 @@ export default function HomePageClient() {
       className="relative min-h-svh overflow-hidden flex items-center justify-center lg:justify-start px-4 sm:px-6 lg:px-10 xl:pl-32 py-10"
       aria-labelledby="home-hero-title"
     >
+      <FallingLeaves />
       <div className="absolute inset-0 z-0">
         <Image
           src={bgDecor}
