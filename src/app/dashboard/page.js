@@ -682,7 +682,7 @@ export default function Dashboard() {
 
   if (!isReady) {
     return (
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16">
+      <main className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-28 pb-16">
         <div className="mb-8 flex items-end justify-between gap-4 animate-pulse">
           <div>
             <div className="w-20 h-6 bg-white/5 rounded-md mb-3" />
@@ -730,7 +730,7 @@ export default function Dashboard() {
 
   return (
     <main
-      className={`max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16 ${isBlurred ? "blur-numbers" : ""}`}
+      className={`max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-28 pb-16 ${isBlurred ? "blur-numbers" : ""}`}
     >
       {/* Page header */}
       <motion.div

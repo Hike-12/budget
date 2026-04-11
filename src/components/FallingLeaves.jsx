@@ -129,6 +129,69 @@ const FallingLeaves = () => {
           position: "absolute",
         }}
       />
+      {/* Blanket of static resting leaves at the bottom */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-2px", // Moved up from -20px
+          left: 0,
+          width: "100%",
+          height: "150px",
+          pointerEvents: "none",
+        }}
+      >
+        {Array.from({ length: 150 }).map((_, i) => {
+          // 3 Distinct layers for realistic depth of field
+          const layer = i % 3; // 0 = back, 1 = mid, 2 = front
+          const itemsPerLayer = 50; // 90 total / 3
+          const indexInLayer = Math.floor(i / 3);
+
+          // Spread evenly with slight organic jitter
+          const spread = (100 / itemsPerLayer) * indexInLayer;
+          const jitter = Math.random() * 4 - 2;
+          const left = `${spread + jitter}%`;
+
+          // Stagger baseline height to build the "pile", randomly vary
+          const baseBottom = layer === 0 ? 10 : layer === 1 ? 0 : -10;
+          const bottom = `${baseBottom + (Math.random() * 20 - 10)}px`;
+
+          // Natural rotation and random flips to break up repeating patterns
+          const rotate = `${Math.random() * 360}deg`;
+          const flip = Math.random() > 0.5 ? 1 : -1;
+
+          // Scale based on distance from camera
+          const baseScale = layer === 0 ? 0.4 : layer === 1 ? 0.65 : 0.9;
+          const scale = baseScale + Math.random() * 0.2;
+
+          // Distant leaves are darker and blurred (depth of field)
+          const brightness = layer === 0 ? 0.4 : layer === 1 ? 0.65 : 0.9;
+          const blur =
+            layer === 0 ? "blur(3px)" : layer === 1 ? "blur(1px)" : "blur(0px)";
+          const dropShadow =
+            layer === 2
+              ? "drop-shadow(0 10px 15px rgba(0,0,0,0.5))"
+              : "drop-shadow(0 4px 6px rgba(0,0,0,0.3))";
+
+          return (
+            <img
+              key={i}
+              src="/leaf.png"
+              alt=""
+              style={{
+                position: "absolute",
+                left,
+                bottom,
+                width: "70px",
+                height: "70px",
+                transform: `rotate(${rotate}) scale(${scale}) scaleX(${flip})`,
+                filter: `brightness(${brightness}) ${blur} ${dropShadow}`,
+                zIndex: layer, // proper stacking
+                objectFit: "contain",
+              }}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 };
