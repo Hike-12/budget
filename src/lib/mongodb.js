@@ -22,14 +22,20 @@ export async function connectToDB() {
   // Ensure production-ready indexes for idempotency
   try {
     const db = cached.conn.connection.db;
+    const idempotencyCollection = db.collection("idempotencyKeys");
+
+    // Migrate away from legacy unique key index that can fail on documents
+    // missing the `key` field (duplicate null values).
+    const indexes = await idempotencyCollection.indexes();
+    if (indexes.some((idx) => idx.name === "key_1")) {
+      await idempotencyCollection.dropIndex("key_1");
+    }
+
     // TTL index for auto-expiry
-    await db
-      .collection("idempotencyKeys")
-      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    // UNIQUE index for the key itself (The actual shield)
-    await db
-      .collection("idempotencyKeys")
-      .createIndex({ key: 1 }, { unique: true });
+    await idempotencyCollection.createIndex(
+      { expiresAt: 1 },
+      { expireAfterSeconds: 0 },
+    );
   } catch (err) {
     console.warn("Index ensuring failed (likely already exists):", err.message);
   }

@@ -76,6 +76,7 @@ async function storeIdempotentResponse(scope, status, body) {
     { _id: scope },
     {
       $set: {
+        key: scope,
         status,
         body: JSON.parse(JSON.stringify(body)),
         updatedAt: now,
