@@ -42,14 +42,6 @@ function normalizeUser(user) {
     .toLowerCase();
 }
 
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function caseInsensitiveUser(user) {
-  return { $regex: new RegExp(`^${escapeRegex(user)}$`, "i") };
-}
-
 function normalizeDate(value, fallback = new Date()) {
   if (!value) return fallback;
   const d = new Date(value);
@@ -67,11 +59,7 @@ export async function GET(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  // Always use case-insensitive match so records saved with any username
-  // casing (e.g. from the mobile app) are always returned together.
-  const data = await Budget.find({ user: caseInsensitiveUser(user) })
-    .sort({ createdAt: -1 })
-    .lean();
+  const data = await Budget.find({ user }).sort({ createdAt: -1 }).lean();
 
   return Response.json(data, { headers: corsHeaders });
 }
@@ -79,109 +67,116 @@ export async function GET(req) {
 export async function POST(req) {
   const corsHeaders = getCorsHeaders(req);
   await connectToDB();
-
-  let body;
   try {
-    body = await req.json();
-  } catch (e) {
-    return Response.json(
-      { error: "Invalid JSON" },
-      { status: 400, headers: corsHeaders },
-    );
-  }
-
-  const result = BudgetPayloadSchema.safeParse(body);
-  if (!result.success) {
-    return Response.json(
-      { error: "Validation failed", details: result.error.errors },
-      { status: 400, headers: corsHeaders },
-    );
-  }
-
-  const {
-    title,
-    amount,
-    type,
-    note,
-    category,
-    createdAt,
-    updatedAt,
-    user: rawUser,
-    clientId,
-  } = result.data;
-
-  const user = normalizeUser(rawUser);
-  if (!user) {
-    return Response.json(
-      { error: "User required" },
-      { status: 400, headers: corsHeaders },
-    );
-  }
-
-  const createdAtDate = normalizeDate(createdAt);
-  const updatedAtDate = normalizeDate(updatedAt, createdAtDate);
-
-  // Upsert by (user, clientId) with database-level LWW guard.
-  if (clientId) {
-    let doc;
+    let body;
     try {
-      doc = await Budget.findOneAndUpdate(
-        {
-          clientId,
-          user,
-          $or: [
-            { updatedAt: { $exists: false } },
-            { updatedAt: { $lte: updatedAtDate } },
-          ],
-        },
-        {
-          $set: {
-            title,
-            amount,
-            type,
-            note,
-            category,
-            createdAt: createdAtDate,
-            updatedAt: updatedAtDate,
-            user,
+      body = await req.json();
+    } catch (e) {
+      return Response.json(
+        { error: "Invalid JSON" },
+        { status: 400, headers: corsHeaders },
+      );
+    }
+
+    const result = BudgetPayloadSchema.safeParse(body);
+    if (!result.success) {
+      return Response.json(
+        { error: "Validation failed", details: result.error.errors },
+        { status: 400, headers: corsHeaders },
+      );
+    }
+
+    const {
+      title,
+      amount,
+      type,
+      note,
+      category,
+      createdAt,
+      updatedAt,
+      user: rawUser,
+      clientId,
+    } = result.data;
+
+    const user = normalizeUser(rawUser);
+    if (!user) {
+      return Response.json(
+        { error: "User required" },
+        { status: 400, headers: corsHeaders },
+      );
+    }
+
+    const createdAtDate = normalizeDate(createdAt);
+    const updatedAtDate = normalizeDate(updatedAt, createdAtDate);
+
+    // Upsert by (user, clientId) with database-level LWW guard.
+    if (clientId) {
+      let doc;
+      try {
+        doc = await Budget.findOneAndUpdate(
+          {
             clientId,
+            user,
+            $or: [
+              { updatedAt: { $exists: false } },
+              { updatedAt: { $lte: updatedAtDate } },
+            ],
           },
-        },
-        { upsert: true, new: true, rawResult: false },
-      ).lean();
-    } catch (err) {
-      if (err?.code === 11000) {
+          {
+            $set: {
+              title,
+              amount,
+              type,
+              note,
+              category,
+              createdAt: createdAtDate,
+              updatedAt: updatedAtDate,
+              user,
+              clientId,
+            },
+          },
+          { upsert: true, new: true, rawResult: false },
+        ).lean();
+      } catch (err) {
+        if (err?.code === 11000) {
+          doc = await Budget.findOne({
+            clientId,
+            user,
+          }).lean();
+        } else {
+          throw err;
+        }
+      }
+
+      if (!doc) {
         doc = await Budget.findOne({
           clientId,
-          user: caseInsensitiveUser(user),
+          user,
         }).lean();
-      } else {
-        throw err;
       }
+
+      return Response.json(doc, { headers: corsHeaders });
     }
 
-    if (!doc) {
-      doc = await Budget.findOne({
-        clientId,
-        user: caseInsensitiveUser(user),
-      }).lean();
-    }
-
+    // Fallback (no clientId): create normally
+    const doc = await Budget.create({
+      title,
+      amount,
+      type,
+      note,
+      category,
+      createdAt: createdAtDate,
+      updatedAt: updatedAtDate,
+      user,
+    });
     return Response.json(doc, { headers: corsHeaders });
+  } catch (error) {
+    console.error("POST /api/budgets failed:", error);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500, headers: corsHeaders },
+    );
   }
-
-  // Fallback (no clientId): create normally
-  const doc = await Budget.create({
-    title,
-    amount,
-    type,
-    note,
-    category,
-    createdAt: createdAtDate,
-    updatedAt: updatedAtDate,
-    user,
-  });
-  return Response.json(doc, { headers: corsHeaders });
 }
 
 export async function PATCH(req) {
@@ -216,12 +211,7 @@ export async function PATCH(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const userQuery = caseInsensitiveUser(user);
-  const query = id
-    ? { _id: id, user: userQuery }
-    : clientId
-      ? { clientId, user: userQuery }
-      : null;
+  const query = id ? { _id: id, user } : clientId ? { clientId, user } : null;
   if (!query)
     return Response.json(
       { error: "id or clientId required" },
@@ -268,15 +258,12 @@ export async function DELETE(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  // Always use case-insensitive user match to handle records saved with any casing.
-  const caseInsensitive = caseInsensitiveUser(user);
   let budget = null;
   if (id) {
-    budget = await Budget.findOne({ _id: id, user: caseInsensitive });
-    if (!budget)
-      budget = await Budget.findOne({ clientId: id, user: caseInsensitive });
+    budget = await Budget.findOne({ _id: id, user });
+    if (!budget) budget = await Budget.findOne({ clientId: id, user });
   } else if (clientId) {
-    budget = await Budget.findOne({ clientId, user: caseInsensitive });
+    budget = await Budget.findOne({ clientId, user });
   }
 
   if (budget) {
