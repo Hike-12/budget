@@ -1,7 +1,6 @@
 import { connectToDB } from "@/lib/mongodb";
 import Budget from "@/lib/Budget";
 import TrashBudget from "@/lib/TrashBudget";
-import mongoose from "mongoose";
 import { z } from "zod";
 
 const BudgetPayloadSchema = z.object({
@@ -55,38 +54,6 @@ function normalizeDate(value, fallback = new Date()) {
   if (!value) return fallback;
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? fallback : d;
-}
-
-function makeIdempotencyScope({ method, user, key }) {
-  return `${method}:${String(user).toLowerCase()}:${String(key)}`;
-}
-
-async function getStoredIdempotentResponse(scope) {
-  const db = mongoose.connection.db;
-  if (!db) return null;
-  return db.collection("idempotencyKeys").findOne({ _id: scope });
-}
-
-async function storeIdempotentResponse(scope, status, body) {
-  const db = mongoose.connection.db;
-  if (!db) return;
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  await db.collection("idempotencyKeys").updateOne(
-    { _id: scope },
-    {
-      $set: {
-        status,
-        body: JSON.parse(JSON.stringify(body)),
-        updatedAt: now,
-        expiresAt,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
 }
 
 export async function GET(req) {
@@ -151,34 +118,24 @@ export async function POST(req) {
     );
   }
 
-  const idemKey = req.headers.get("x-idempotency-key");
-  const idemScope = idemKey
-    ? makeIdempotencyScope({ method: "POST", user, key: idemKey })
-    : null;
-  if (idemScope) {
-    const cached = await getStoredIdempotentResponse(idemScope);
-    if (cached) {
-      return Response.json(cached.body, {
-        status: cached.status ?? 200,
-        headers: corsHeaders,
-      });
-    }
-  }
-
   const createdAtDate = normalizeDate(createdAt);
   const updatedAtDate = normalizeDate(updatedAt, createdAtDate);
 
-  // Idempotent create by (user, clientId) — fully atomic to prevent duplicates
+  // Upsert by (user, clientId) with database-level LWW guard.
   if (clientId) {
     let doc;
     try {
-      // Atomic upsert: either inserts a new doc or returns the existing one.
-      // $setOnInsert only writes fields when a new document is created,
-      // preventing overwrites of a newer server version on re-sync.
       doc = await Budget.findOneAndUpdate(
-        { clientId, user },
         {
-          $setOnInsert: {
+          clientId,
+          user,
+          $or: [
+            { updatedAt: { $exists: false } },
+            { updatedAt: { $lte: updatedAtDate } },
+          ],
+        },
+        {
+          $set: {
             title,
             amount,
             type,
@@ -193,7 +150,6 @@ export async function POST(req) {
         { upsert: true, new: true, rawResult: false },
       ).lean();
     } catch (err) {
-      // E11000 duplicate key — another concurrent request already created it
       if (err?.code === 11000) {
         doc = await Budget.findOne({
           clientId,
@@ -204,32 +160,13 @@ export async function POST(req) {
       }
     }
 
-    // If the incoming payload is newer, update the existing doc
-    if (doc) {
-      const existingUpdatedAt = normalizeDate(doc.updatedAt, new Date(0));
-      if (updatedAtDate > existingUpdatedAt) {
-        doc =
-          (await Budget.findOneAndUpdate(
-            { _id: doc._id, updatedAt: { $lte: updatedAtDate } },
-            {
-              $set: {
-                title,
-                amount,
-                type,
-                note,
-                category,
-                createdAt: createdAtDate,
-                updatedAt: updatedAtDate,
-                user,
-                clientId,
-              },
-            },
-            { new: true },
-          ).lean()) ?? doc;
-      }
+    if (!doc) {
+      doc = await Budget.findOne({
+        clientId,
+        user: caseInsensitiveUser(user),
+      }).lean();
     }
 
-    if (idemScope) await storeIdempotentResponse(idemScope, 200, doc);
     return Response.json(doc, { headers: corsHeaders });
   }
 
@@ -244,7 +181,6 @@ export async function POST(req) {
     updatedAt: updatedAtDate,
     user,
   });
-  if (idemScope) await storeIdempotentResponse(idemScope, 200, doc);
   return Response.json(doc, { headers: corsHeaders });
 }
 
@@ -292,42 +228,13 @@ export async function PATCH(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const idemKey = req.headers.get("x-idempotency-key");
-  const idemScope = idemKey
-    ? makeIdempotencyScope({ method: "PATCH", user, key: idemKey })
-    : null;
-  if (idemScope) {
-    const cached = await getStoredIdempotentResponse(idemScope);
-    if (cached) {
-      return Response.json(cached.body, {
-        status: cached.status ?? 200,
-        headers: corsHeaders,
-      });
-    }
-  }
-
-  const current = await Budget.findOne(query).lean();
-  if (!current)
-    return Response.json(
-      { error: "Not found" },
-      { status: 404, headers: corsHeaders },
-    );
-
   const update = { ...patchResult.data };
   if (update.createdAt) update.createdAt = normalizeDate(update.createdAt);
 
   const incomingUpdatedAt = normalizeDate(update.updatedAt);
-  const currentUpdatedAt = normalizeDate(current.updatedAt, new Date(0));
-  if (incomingUpdatedAt < currentUpdatedAt) {
-    return Response.json(
-      { error: "Conflict", latest: current },
-      { status: 409, headers: corsHeaders },
-    );
-  }
-
   update.updatedAt = incomingUpdatedAt;
 
-  const doc = await Budget.findOneAndUpdate(
+  let doc = await Budget.findOneAndUpdate(
     {
       ...query,
       $or: [
@@ -338,13 +245,15 @@ export async function PATCH(req) {
     update,
     { new: true },
   ).lean();
+  if (!doc) {
+    doc = await Budget.findOne(query).lean();
+  }
   if (!doc)
     return Response.json(
-      { error: "Conflict" },
-      { status: 409, headers: corsHeaders },
+      { error: "Not found" },
+      { status: 404, headers: corsHeaders },
     );
 
-  if (idemScope) await storeIdempotentResponse(idemScope, 200, doc);
   return Response.json(doc, { headers: corsHeaders });
 }
 
@@ -358,20 +267,6 @@ export async function DELETE(req) {
       { error: "User required" },
       { status: 400, headers: corsHeaders },
     );
-
-  const idemKey = req.headers.get("x-idempotency-key");
-  const idemScope = idemKey
-    ? makeIdempotencyScope({ method: "DELETE", user, key: idemKey })
-    : null;
-  if (idemScope) {
-    const cached = await getStoredIdempotentResponse(idemScope);
-    if (cached) {
-      return Response.json(cached.body, {
-        status: cached.status ?? 200,
-        headers: corsHeaders,
-      });
-    }
-  }
 
   // Always use case-insensitive user match to handle records saved with any casing.
   const caseInsensitive = caseInsensitiveUser(user);
@@ -388,8 +283,6 @@ export async function DELETE(req) {
     // Move to trash before deleting
     await TrashBudget.create({ ...budget.toObject(), deletedAt: new Date() });
     await budget.deleteOne();
-    const payload = { success: true, trashed: true };
-    if (idemScope) await storeIdempotentResponse(idemScope, 200, payload);
     return Response.json(
       { success: true, trashed: true },
       { headers: corsHeaders },
@@ -397,8 +290,8 @@ export async function DELETE(req) {
   }
 
   return Response.json(
-    { error: "Not found" },
-    { status: 404, headers: corsHeaders },
+    { success: true, trashed: false },
+    { headers: corsHeaders },
   );
 }
 
