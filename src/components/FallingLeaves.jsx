@@ -17,9 +17,8 @@ const FallingLeaves = () => {
     });
   }, []);
 
-  const particlesLoaded = (container) => {
-    // You can access the internal engine container if needed
-    console.log("Particles engine loaded successfully", container);
+  const particlesLoaded = () => {
+    // Engine loaded — no-op
   };
 
   const options = useMemo(
