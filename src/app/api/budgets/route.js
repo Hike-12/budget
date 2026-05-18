@@ -59,7 +59,11 @@ export async function GET(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const data = await Budget.find({ user }).sort({ createdAt: -1 }).lean();
+  const data = await Budget.find({
+    user: { $regex: new RegExp(`^${user}$`, "i") },
+  })
+    .sort({ createdAt: -1 })
+    .lean();
 
   return Response.json(data, { headers: corsHeaders });
 }
@@ -116,7 +120,7 @@ export async function POST(req) {
         doc = await Budget.findOneAndUpdate(
           {
             clientId,
-            user,
+            user: { $regex: new RegExp(`^${user}$`, "i") },
             $or: [
               { updatedAt: { $exists: false } },
               { updatedAt: { $lte: updatedAtDate } },
@@ -141,7 +145,7 @@ export async function POST(req) {
         if (err?.code === 11000) {
           doc = await Budget.findOne({
             clientId,
-            user,
+            user: { $regex: new RegExp(`^${user}$`, "i") },
           }).lean();
         } else {
           throw err;
@@ -151,7 +155,7 @@ export async function POST(req) {
       if (!doc) {
         doc = await Budget.findOne({
           clientId,
-          user,
+          user: { $regex: new RegExp(`^${user}$`, "i") },
         }).lean();
       }
 
@@ -211,7 +215,12 @@ export async function PATCH(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const query = id ? { _id: id, user } : clientId ? { clientId, user } : null;
+  const userRegex = { $regex: new RegExp(`^${user}$`, "i") };
+  const query = id
+    ? { _id: id, user: userRegex }
+    : clientId
+      ? { clientId, user: userRegex }
+      : null;
   if (!query)
     return Response.json(
       { error: "id or clientId required" },
@@ -259,11 +268,14 @@ export async function DELETE(req) {
     );
 
   let budget = null;
+  const userRegex = { $regex: new RegExp(`^${user}$`, "i") };
+
   if (id) {
-    budget = await Budget.findOne({ _id: id, user });
-    if (!budget) budget = await Budget.findOne({ clientId: id, user });
+    budget = await Budget.findOne({ _id: id, user: userRegex });
+    if (!budget)
+      budget = await Budget.findOne({ clientId: id, user: userRegex });
   } else if (clientId) {
-    budget = await Budget.findOne({ clientId, user });
+    budget = await Budget.findOne({ clientId, user: userRegex });
   }
 
   if (budget) {
