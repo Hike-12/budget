@@ -5,8 +5,8 @@ import {
   useMemo,
   useCallback,
   useRef,
-  useEffect,
   useDeferredValue,
+  useEffect,
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -66,29 +66,6 @@ function makeClientId() {
   return `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function makeIdempotencyKey(prefix, username, stableId = "") {
-  const nonce =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  return `${prefix}:${String(username).toLowerCase()}:${stableId}:${nonce}`;
-}
-
-async function fetchWithRetry(url, init, retries = 3, baseDelay = 250) {
-  let lastErr;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fetch(url, init);
-    } catch (err) {
-      lastErr = err;
-      if (i < retries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, baseDelay * 2 ** i));
-      }
-    }
-  }
-  throw lastErr ?? new Error("Network request failed");
-}
-
 /* ── API helpers (plain async fns — used by useMutation) ── */
 async function fetchBudgetsApi(username, signal) {
   const res = await fetch(`/api/budgets?user=${username}`, { signal });
@@ -109,12 +86,11 @@ async function addBudgetApi({ budget, username }) {
     updatedAt: budget.updatedAt || new Date().toISOString(),
   };
 
-  const res = await fetchWithRetry("/api/budgets", {
+  const res = await fetch("/api/budgets", {
     method: "POST",
     body: JSON.stringify(payload),
     headers: {
       "Content-Type": "application/json",
-      "X-Idempotency-Key": makeIdempotencyKey("add", normalizedUser, clientId),
     },
   });
   if (!res.ok) throw new Error("Failed to add transaction");
@@ -125,8 +101,7 @@ async function deleteBudgetApi({ item, username }) {
   const normalizedUser = String(username || "")
     .toLowerCase()
     .trim();
-  const stableId = item.clientId || item._id;
-  const res = await fetchWithRetry("/api/budgets", {
+  const res = await fetch("/api/budgets", {
     method: "DELETE",
     body: JSON.stringify({
       id: item._id,
@@ -135,11 +110,6 @@ async function deleteBudgetApi({ item, username }) {
     }),
     headers: {
       "Content-Type": "application/json",
-      "X-Idempotency-Key": makeIdempotencyKey(
-        "delete",
-        normalizedUser,
-        stableId,
-      ),
     },
   });
   if (!res.ok) throw new Error("Failed to delete transaction");
@@ -158,12 +128,11 @@ async function editBudgetApi({ budget, username }) {
     user: normalizedUser,
   };
 
-  const res = await fetchWithRetry("/api/budgets", {
+  const res = await fetch("/api/budgets", {
     method: "PATCH",
     body: JSON.stringify(payload),
     headers: {
       "Content-Type": "application/json",
-      "X-Idempotency-Key": makeIdempotencyKey("edit", normalizedUser, stableId),
     },
   });
   if (!res.ok) throw new Error("Failed to update transaction");
@@ -517,29 +486,20 @@ export default function Dashboard() {
     [budgets],
   );
 
-  // Pre-sort once per dataset change so filter toggles don't keep re-sorting.
-  const sortedBudgetsPrepared = useMemo(() => {
-    const byDateDesc = [...budgetsPrepared].sort(
-      (a, b) => b._createdAtTs - a._createdAtTs,
-    );
-    const byDateAsc = [...byDateDesc].reverse();
-    const byAmountAsc = [...budgetsPrepared].sort(
-      (a, b) => a._amountNum - b._amountNum,
-    );
-    const byAmountDesc = [...byAmountAsc].reverse();
-
-    return {
-      createdAt_desc: byDateDesc,
-      createdAt_asc: byDateAsc,
-      amount_asc: byAmountAsc,
-      amount_desc: byAmountDesc,
-    };
-  }, [budgetsPrepared]);
-
-  const baseSortedBudgets = useMemo(
-    () => sortedBudgetsPrepared[`${sortBy}_${sortOrder}`] ?? budgetsPrepared,
-    [sortedBudgetsPrepared, sortBy, sortOrder, budgetsPrepared],
-  );
+  const baseSortedBudgets = useMemo(() => {
+    const sorted = [...budgetsPrepared];
+    sorted.sort((a, b) => {
+      if (sortBy === "amount") {
+        return sortOrder === "asc"
+          ? a._amountNum - b._amountNum
+          : b._amountNum - a._amountNum;
+      }
+      return sortOrder === "asc"
+        ? a._createdAtTs - b._createdAtTs
+        : b._createdAtTs - a._createdAtTs;
+    });
+    return sorted;
+  }, [budgetsPrepared, sortBy, sortOrder]);
 
   /* ── Filtering & sorting: useMemo replaces useEffect ── */
   const filteredBudgets = useMemo(() => {
@@ -600,47 +560,68 @@ export default function Dashboard() {
   );
   const shownCount = Math.min(visibleCount, filteredBudgets.length);
 
+  const resetVisibleCount = useCallback(() => {
+    setVisibleCount(
+      pageSize === "all" ? filteredBudgets.length : Number(pageSize),
+    );
+  }, [pageSize, filteredBudgets.length]);
+
   const setFilterTypeSmooth = useCallback(
-    (value) => startFilterTransition(() => setFilterType(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setFilterType(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
   const setSortBySmooth = useCallback(
-    (value) => startFilterTransition(() => setSortBy(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setSortBy(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
   const setSortOrderSmooth = useCallback(
-    (value) => startFilterTransition(() => setSortOrder(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setSortOrder(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
   const setFilterCategorySmooth = useCallback(
-    (value) => startFilterTransition(() => setFilterCategory(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setFilterCategory(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
   const setFilterMonthSmooth = useCallback(
-    (value) => startFilterTransition(() => setFilterMonth(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setFilterMonth(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
   const setFilterYearSmooth = useCallback(
-    (value) => startFilterTransition(() => setFilterYear(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setFilterYear(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
   const setFilterRangeSmooth = useCallback(
-    (value) => startFilterTransition(() => setFilterRange(value)),
-    [startFilterTransition],
+    (value) =>
+      startFilterTransition(() => {
+        setFilterRange(value);
+        resetVisibleCount();
+      }),
+    [startFilterTransition, resetVisibleCount],
   );
-
-  /* ── visibleCount resets when filter keys change (derived, not an effect) ── */
-  // We track these as a stable key to compare — no useEffect needed
-  const filterKey = `${deferredSearch}|${filterType}|${filterCategory}|${sortBy}|${sortOrder}|${filterMonth}|${filterYear}|${filterRange}|${pageSize}`;
-  const lastFilterKeyRef = useRef(filterKey);
-  useEffect(() => {
-    if (lastFilterKeyRef.current !== filterKey) {
-      lastFilterKeyRef.current = filterKey;
-      setVisibleCount(
-        pageSize === "all" ? filteredBudgets.length : Number(pageSize),
-      );
-    }
-  }, [filterKey, pageSize, filteredBudgets.length]);
 
   useEffect(() => {
     if (pageSize === "all" && visibleCount !== filteredBudgets.length) {
@@ -860,7 +841,10 @@ export default function Dashboard() {
                   filterRange={filterRange}
                   setFilterRange={setFilterRangeSmooth}
                   search={search}
-                  setSearch={setSearch}
+                  setSearch={(value) => {
+                    setSearch(value);
+                    resetVisibleCount();
+                  }}
                 />
               </div>
 
@@ -904,9 +888,15 @@ export default function Dashboard() {
                 <div className="hidden sm:block w-32">
                   <CustomSelect
                     value={pageSize}
-                    onChange={(val) =>
-                      setPageSize(val === "all" ? "all" : Number(val))
-                    }
+                    onChange={(val) => {
+                      const nextPageSize = val === "all" ? "all" : Number(val);
+                      setPageSize(nextPageSize);
+                      setVisibleCount(
+                        nextPageSize === "all"
+                          ? filteredBudgets.length
+                          : Number(nextPageSize),
+                      );
+                    }}
                     options={[
                       { value: 25, label: "Show 25" },
                       { value: 50, label: "Show 50" },
