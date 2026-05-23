@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   FiPlus,
   FiSave,
@@ -23,6 +23,21 @@ const categories = [
 const inputCls =
   "w-full bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 placeholder:text-secondary/25";
 
+function calcPreview(expr) {
+  if (!expr || !/[+\-*/]/.test(expr)) return null;
+  const sanitized = expr.replace(/[^0-9.+\-*/]/g, "").trim();
+  if (!sanitized) return null;
+  try {
+    const result = Function(`"use strict"; return (${sanitized})`)();
+    if (typeof result === "number" && isFinite(result)) {
+      return Math.round(result * 100) / 100;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const defaultState = (editing) => ({
   title: editing?.title ?? "",
   amount: editing?.amount ?? "",
@@ -38,6 +53,15 @@ const defaultState = (editing) => ({
 export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
   const [form, setForm] = useState(() => defaultState(editing));
   const [errors, setErrors] = useState({});
+  const [calcExpr, setCalcExpr] = useState(null);
+  const [calcResult, setCalcResult] = useState(null);
+  const calcTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (calcTimeoutRef.current) clearTimeout(calcTimeoutRef.current);
+    };
+  }, []);
 
   // Re-seed when editing target switches  (useEffect is correct here — it's
   // a genuine synchronisation with an external prop change, not derivable synchronously)
@@ -54,10 +78,44 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
     [],
   );
 
+  const handleAmountChange = useCallback(
+    (e) => {
+      const value = e.target.value;
+      set("amount")(value);
+      if (calcTimeoutRef.current) clearTimeout(calcTimeoutRef.current);
+      if (value && /[+\-*/]/.test(value)) {
+        const result = calcPreview(value);
+        if (result !== null) {
+          setCalcExpr(value);
+          setCalcResult(result);
+          calcTimeoutRef.current = setTimeout(() => {
+            setForm((prev) => ({ ...prev, amount: String(result) }));
+          }, 300);
+          return;
+        }
+      }
+      setCalcExpr(null);
+      setCalcResult(null);
+    },
+    [set],
+  );
+
+  const handleAmountBlur = useCallback(() => {
+    if (calcTimeoutRef.current) clearTimeout(calcTimeoutRef.current);
+    const val = form.amount;
+    if (val && /[+\-*/]/.test(val)) {
+      const result = calcPreview(val);
+      if (result !== null) {
+        setForm((prev) => ({ ...prev, amount: String(result) }));
+      }
+    }
+  }, [form.amount]);
+
   const validate = useCallback(() => {
     const e = {};
     if (!form.title.trim()) e.title = "Title is required";
-    if (!form.amount || Number(form.amount) <= 0)
+    const amountNum = Number(form.amount);
+    if (!form.amount || isNaN(amountNum) || amountNum <= 0)
       e.amount = "Enter a valid amount";
     return e;
   }, [form.title, form.amount]);
@@ -65,6 +123,18 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
   const handleSubmit = useCallback(
     (evt) => {
       evt.preventDefault();
+
+      let resolvedAmount = form.amount;
+      if (resolvedAmount && /[+\-*/]/.test(resolvedAmount)) {
+        const evaled = calcPreview(resolvedAmount);
+        if (evaled !== null) {
+          resolvedAmount = String(evaled);
+          setForm((prev) => ({ ...prev, amount: resolvedAmount }));
+          setCalcExpr(null);
+          setCalcResult(null);
+        }
+      }
+
       const e = validate();
       if (Object.keys(e).length) {
         setErrors(e);
@@ -72,7 +142,7 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
       }
       const payload = {
         title: form.title.trim(),
-        amount: Number(form.amount),
+        amount: Number(resolvedAmount),
         type: form.type,
         note: form.note,
         category: form.category,
@@ -163,14 +233,21 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
                 ₹
               </span>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 placeholder="0"
                 className={`${inputCls} pl-8 tabular-nums ${errors.amount ? "border-red-500/40" : ""}`}
                 value={form.amount}
-                onChange={(e) => set("amount")(e.target.value)}
-                min="0"
-                step="0.01"
+                onChange={handleAmountChange}
+                onBlur={handleAmountBlur}
               />
+            </div>
+            <div className="h-5 m-1.5 flex items-center">
+              {calcExpr !== null && (
+                <p className="text-primary/80 text-xs font-semibold">
+                  {calcExpr} = {calcResult}
+                </p>
+              )}
             </div>
             <AnimatePresence>
               {errors.amount && (
