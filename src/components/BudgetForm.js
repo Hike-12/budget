@@ -55,6 +55,8 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
   const [errors, setErrors] = useState({});
   const [calcExpr, setCalcExpr] = useState(null);
   const [calcResult, setCalcResult] = useState(null);
+  const [convertedFrom, setConvertedFrom] = useState(null);
+  const [convertedTo, setConvertedTo] = useState(null);
   const calcTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -83,13 +85,32 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
       const value = e.target.value;
       set("amount")(value);
       if (calcTimeoutRef.current) clearTimeout(calcTimeoutRef.current);
+
+      let displayExpr = value;
+      if (convertedFrom && convertedTo && value.startsWith(convertedTo)) {
+        const rest = value.slice(convertedTo.length);
+        if (rest && /^[+\-*/]/.test(rest)) {
+          displayExpr = convertedFrom + rest;
+        } else {
+          setConvertedFrom(null);
+          setConvertedTo(null);
+        }
+      } else if (convertedFrom) {
+        setConvertedFrom(null);
+        setConvertedTo(null);
+      }
+
       if (value && /[+\-*/]/.test(value)) {
-        const result = calcPreview(value);
+        if (/[+\-*/]$/.test(value)) return;
+
+        const result = calcPreview(displayExpr);
         if (result !== null) {
-          setCalcExpr(value);
+          setCalcExpr(displayExpr);
           setCalcResult(result);
           calcTimeoutRef.current = setTimeout(() => {
             setForm((prev) => ({ ...prev, amount: String(result) }));
+            setConvertedFrom(displayExpr);
+            setConvertedTo(String(result));
           }, 300);
           return;
         }
@@ -97,19 +118,21 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
       setCalcExpr(null);
       setCalcResult(null);
     },
-    [set],
+    [set, convertedFrom, convertedTo],
   );
 
   const handleAmountBlur = useCallback(() => {
     if (calcTimeoutRef.current) clearTimeout(calcTimeoutRef.current);
-    const val = form.amount;
-    if (val && /[+\-*/]/.test(val)) {
-      const result = calcPreview(val);
+    const src = calcExpr || form.amount;
+    if (src && /[+\-*/]/.test(src)) {
+      const result = calcPreview(src);
       if (result !== null) {
         setForm((prev) => ({ ...prev, amount: String(result) }));
+        setConvertedFrom(src);
+        setConvertedTo(String(result));
       }
     }
-  }, [form.amount]);
+  }, [form.amount, calcExpr]);
 
   const validate = useCallback(() => {
     const e = {};
@@ -132,6 +155,8 @@ export default function BudgetForm({ onAdd, onEdit, editing, setEditing }) {
           setForm((prev) => ({ ...prev, amount: resolvedAmount }));
           setCalcExpr(null);
           setCalcResult(null);
+          setConvertedFrom(null);
+          setConvertedTo(null);
         }
       }
 
