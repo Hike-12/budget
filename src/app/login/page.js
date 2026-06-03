@@ -57,6 +57,47 @@ export default function LoginPage() {
       return;
     }
 
+    async function handleTestCredentialsLogin() {
+      setError("");
+      setIsLoading(true);
+      const loadingToastId = toast.loading("Signing in with test credentials...");
+
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username: "test", password: "123456" }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          toast.success("Logged in with test credentials!", {
+            id: loadingToastId,
+          });
+          localStorage.setItem("username", (data.username || "test").toLowerCase().trim());
+          window.dispatchEvent(new Event("auth-change"));
+          router.replace("/dashboard");
+        } else {
+          const message = data.message || "Invalid credentials";
+          setError(message);
+          toast.error(message, {
+            id: loadingToastId,
+          });
+        }
+      } catch {
+        const message = "An error occurred. Please try again.";
+        setError(message);
+        toast.error(message, {
+          id: loadingToastId,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     setIsLoading(true);
     const loadingToastId = toast.loading(
       isLogin ? "Signing in..." : "Creating account...",
@@ -332,6 +373,15 @@ export default function LoginPage() {
           </div>
         </form>
       </motion.div>
+
+      <button
+        type="button"
+        onClick={handleTestCredentialsLogin}
+        disabled={isLoading}
+        className="absolute bottom-6 right-6 z-20 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-md border border-primary/40 bg-dark/70 text-primary backdrop-blur-md hover:bg-primary hover:text-dark transition-all shadow-[0_8px_30px_rgba(0,0,0,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        Login with test credentials
+      </button>
     </div>
   );
 }
