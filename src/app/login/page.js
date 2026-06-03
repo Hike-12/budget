@@ -39,6 +39,50 @@ export default function LoginPage() {
     if (storedUser) router.replace("/dashboard");
   }, [router]);
 
+  async function handleTestCredentialsLogin() {
+    setError("");
+    setIsLoading(true);
+    const loadingToastId = toast.loading("Signing in with test credentials...");
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: "test", password: "123456" }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success("Logged in with test credentials!", {
+          id: loadingToastId,
+        });
+        localStorage.setItem(
+          "username",
+          (data.username || "test").toLowerCase().trim(),
+        );
+        window.dispatchEvent(new Event("auth-change"));
+        router.replace("/dashboard");
+      } else {
+        const message = data.message || "Invalid credentials";
+        setError(message);
+        toast.error(message, {
+          id: loadingToastId,
+        });
+      }
+    } catch {
+      const message = "An error occurred. Please try again.";
+      setError(message);
+      toast.error(message, {
+        id: loadingToastId,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -55,47 +99,6 @@ export default function LoginPage() {
       setError(firstError);
       toast.error(firstError);
       return;
-    }
-
-    async function handleTestCredentialsLogin() {
-      setError("");
-      setIsLoading(true);
-      const loadingToastId = toast.loading("Signing in with test credentials...");
-
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username: "test", password: "123456" }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          toast.success("Logged in with test credentials!", {
-            id: loadingToastId,
-          });
-          localStorage.setItem("username", (data.username || "test").toLowerCase().trim());
-          window.dispatchEvent(new Event("auth-change"));
-          router.replace("/dashboard");
-        } else {
-          const message = data.message || "Invalid credentials";
-          setError(message);
-          toast.error(message, {
-            id: loadingToastId,
-          });
-        }
-      } catch {
-        const message = "An error occurred. Please try again.";
-        setError(message);
-        toast.error(message, {
-          id: loadingToastId,
-        });
-      } finally {
-        setIsLoading(false);
-      }
     }
 
     setIsLoading(true);
