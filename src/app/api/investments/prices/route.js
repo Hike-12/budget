@@ -44,7 +44,36 @@ async function fetchYahoo(symbol, date) {
       close: quotes[index],
     }))
     .filter((row) => Number.isFinite(row.close));
-  const historical = nearestRecord(rows, date);
+  let historicalRows = rows;
+  if (
+    date &&
+    rows.length &&
+    Date.parse(`${date}T00:00:00Z`) < Date.parse(`${rows[0].date}T00:00:00Z`)
+  ) {
+    historicalRows = [];
+    const target = Date.parse(`${date}T00:00:00Z`);
+    const period1 = Math.floor(target / 1000) - 4 * 24 * 60 * 60;
+    const period2 = Math.floor(target / 1000) + 5 * 24 * 60 * 60;
+    const historyResponse = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encoded}?period1=${period1}&period2=${period2}&interval=1d`,
+      {
+        headers: { "User-Agent": "Mozilla/5.0 budget-portfolio/1.0" },
+        next: { revalidate: 0 },
+      },
+    );
+    if (historyResponse.ok) {
+      const historyPayload = await historyResponse.json();
+      const history = historyPayload?.chart?.result?.[0];
+      const historyQuotes = history?.indicators?.quote?.[0]?.close || [];
+      historicalRows = (history?.timestamp || [])
+        .map((timestamp, index) => ({
+          date: new Date(timestamp * 1000).toISOString().slice(0, 10),
+          close: historyQuotes[index],
+        }))
+        .filter((row) => Number.isFinite(row.close));
+    }
+  }
+  const historical = nearestRecord(historicalRows, date);
   return {
     currentPrice: result.meta?.regularMarketPrice ?? rows.at(-1)?.close ?? null,
     historicalPrice: historical?.close ?? null,
@@ -90,7 +119,7 @@ export async function GET(req) {
     );
   }
   const { symbol, assetType, date, fallbackPrice } = parsed.data;
-  const cacheKey = `${assetType}:${symbol}:${date || "latest"}`;
+  const cacheKey = `${assetType}:${symbol}:${date || "latest"}:${fallbackPrice ?? ""}`;
   const cached = priceCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now())
     return Response.json(cached.value);

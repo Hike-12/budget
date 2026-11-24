@@ -577,14 +577,52 @@ function InvestmentModal({ user, investment, saving, onClose, onSave }) {
         },
   );
   const [priceState, setPriceState] = useState({ loading: false, message: "" });
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const set = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
+
+  useEffect(() => {
+    const query = searchText.trim();
+    if (
+      query.length < 2 ||
+      !["stock", "etf", "mutual_fund"].includes(form.assetType)
+    ) {
+      setSearchResults([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const params = new URLSearchParams({
+          q: query,
+          assetType: form.assetType,
+        });
+        const response = await fetch(`/api/investments/search?${params}`, {
+          signal: controller.signal,
+        });
+        const result = await response.json();
+        setSearchResults(result.results || []);
+      } catch (error) {
+        if (error.name !== "AbortError") setSearchResults([]);
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false);
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchText, form.assetType]);
 
   const choosePreset = (symbol) => {
     const preset = PRESETS.find((item) => item.symbol === symbol);
     if (preset) {
       const nextForm = { ...form, ...preset };
       setForm(nextForm);
+      setSearchText("");
       fetchHistoricalPrice(form.purchaseDate, nextForm);
     }
   };
@@ -596,7 +634,7 @@ function InvestmentModal({ user, investment, saving, onClose, onSave }) {
     if (!targetForm.symbol || !date) return;
     setPriceState({ loading: true, message: "Looking up the closest price…" });
     try {
-      const price = await getPrice(targetForm, date);
+      const price = await getPrice({ ...targetForm, buyPrice: 0 }, date);
       if (Number(price.historicalPrice) > 0) {
         const nextBuyPrice = Number(price.historicalPrice);
         setForm((current) => ({
@@ -698,10 +736,62 @@ function InvestmentModal({ user, investment, saving, onClose, onSave }) {
             {investment ? "Edit holding" : "Add an investment"}
           </h2>
           <p className="mt-1 text-xs text-secondary/40">
-            The purchase is recorded as a verified Investment outflow.
+            The purchase is recorded as an Investment outflow.
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!investment && (
+            <Field
+              label="Find a stock, ETF, or mutual fund"
+              className="relative"
+            >
+              <input
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                className={inputClass}
+                placeholder={
+                  form.assetType === "mutual_fund"
+                    ? "Search fund name"
+                    : "Search company or ticker"
+                }
+                autoComplete="off"
+              />
+              {(isSearching || searchResults.length > 0) && (
+                <div className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-white/10 bg-[#101010] shadow-xl">
+                  {isSearching && (
+                    <p className="px-3 py-2 text-xs text-secondary/45">
+                      Searching…
+                    </p>
+                  )}
+                  {searchResults.map((result) => (
+                    <button
+                      key={`${result.assetType}-${result.symbol}`}
+                      type="button"
+                      onClick={() => {
+                        const nextForm = { ...form, ...result };
+                        setForm(nextForm);
+                        setSearchText("");
+                        setSearchResults([]);
+                        fetchHistoricalPrice(form.purchaseDate, nextForm);
+                      }}
+                      className="block w-full border-b border-white/5 px-3 py-2 text-left last:border-0 hover:bg-white/5"
+                    >
+                      <span className="block truncate text-xs text-accent">
+                        {result.name}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] uppercase tracking-wider text-secondary/35">
+                        {result.symbol} · {result.assetType.replace("_", " ")}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="mt-1 text-[10px] text-secondary/30">
+                Choose the asset type below to search funds through AMFI. You
+                can also enter a ticker or scheme code directly.
+              </p>
+            </Field>
+          )}
           {!investment && (
             <div>
               <label className="mb-2 block text-[10px] font-semibold uppercase tracking-widest text-secondary/40">

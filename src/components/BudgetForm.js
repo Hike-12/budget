@@ -18,6 +18,7 @@ const categories = [
   "religion",
   "personal",
   "miscellaneous",
+  "Investment",
 ];
 
 const inputCls =
