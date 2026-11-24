@@ -37,7 +37,9 @@ export async function GET(req) {
     const payload = await response.json();
     const results = (payload.quotes || [])
       .filter(
-        (item) => ["EQUITY", "ETF"].includes(item.quoteType) && item.symbol,
+        (item) =>
+          item.quoteType === (assetType === "etf" ? "ETF" : "EQUITY") &&
+          item.symbol,
       )
       .map((item) => ({
         name: item.longname || item.shortname || item.symbol,

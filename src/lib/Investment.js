@@ -1,4 +1,15 @@
 import mongoose from "mongoose";
+import { FREQUENCIES } from "./investmentSchedule";
+
+const ScheduleSchema = new mongoose.Schema(
+  {
+    frequency: { type: String, enum: Object.keys(FREQUENCIES), required: true },
+    nextDate: { type: String, required: true },
+    dayOfMonth: { type: Number, min: 1, max: 31, required: true },
+    amount: { type: Number, min: 0.01, required: true },
+  },
+  { _id: false },
+);
 
 const InvestmentSchema = new mongoose.Schema(
   {
@@ -21,6 +32,7 @@ const InvestmentSchema = new mongoose.Schema(
     },
     notes: { type: String, default: "" },
     manualCurrentValue: { type: Number, min: 0 },
+    schedule: { type: ScheduleSchema, default: null },
   },
   { timestamps: true },
 );
