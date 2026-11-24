@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -18,10 +18,23 @@ import {
 import { motion } from "framer-motion";
 
 export default function AnalyticsTab({ budgets }) {
+  const [outflowMode, setOutflowMode] = useState("all");
+  const chartBudgets = useMemo(
+    () =>
+      outflowMode === "living"
+        ? budgets.filter(
+            (budget) =>
+              budget.source !== "investment_bridge" &&
+              budget.category !== "Investment",
+          )
+        : budgets,
+    [budgets, outflowMode],
+  );
+
   // Aggregate data for Area Chart (Income vs Expense by Month)
   const monthlyData = useMemo(() => {
     const dataByMonth = {};
-    budgets.forEach((b) => {
+    chartBudgets.forEach((b) => {
       const date = new Date(b.createdAt);
       const monthYear = date.toLocaleDateString("en-US", {
         month: "short",
@@ -45,11 +58,11 @@ export default function AnalyticsTab({ budgets }) {
     return Object.values(dataByMonth)
       .sort((a, b) => a.sortKey - b.sortKey)
       .slice(-6); // Only last 6 months for clean view
-  }, [budgets]);
+  }, [chartBudgets]);
 
   // Aggregate data for Category Expenses
   const categoryData = useMemo(() => {
-    const expenses = budgets.filter((b) => b.type === "expense");
+    const expenses = chartBudgets.filter((b) => b.type === "expense");
     const dataByCategory = {};
 
     expenses.forEach((b) => {
@@ -61,7 +74,7 @@ export default function AnalyticsTab({ budgets }) {
     return Object.entries(dataByCategory)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [budgets]);
+  }, [chartBudgets]);
 
   // General Pie Chart colors
   const PIE_COLORS = [
@@ -138,6 +151,35 @@ export default function AnalyticsTab({ budgets }) {
           border-radius: 8px;
         }
       `}</style>
+
+      <div className="lg:col-span-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/6 bg-[#0a0a0a] px-4 py-3">
+        <p className="text-xs font-medium text-secondary/55">Expense view</p>
+        <div
+          role="group"
+          aria-label="Analytics outflow filter"
+          className="inline-flex rounded-lg border border-white/8 bg-black/40 p-1"
+        >
+          {[
+            { value: "all", label: "All Outflows" },
+            { value: "living", label: "Living Spend Only" },
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={outflowMode === option.value}
+              onClick={() => setOutflowMode(option.value)}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${outflowMode === option.value ? "bg-white/10 text-accent" : "text-secondary/45 hover:text-accent"}`}
+            >
+              {option.label}
+              {option.value === "living" && (
+                <span className="ml-1 text-secondary/35">
+                  (Excl. Investments)
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 1. Cashflow Overview (Area Chart) */}
       <div className="lg:col-span-2 bg-[#0a0a0a] border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-colors">

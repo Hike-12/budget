@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import BudgetCard from "@/components/BudgetCard";
 import BudgetForm from "@/components/BudgetForm";
+import PendingVerifyBanner from "@/components/PendingVerifyBanner";
 import TotalBalance from "@/components/TotalBalance";
 import FilterBar from "@/components/FilterBar";
 import CustomSelect from "@/components/CustomSelect";
@@ -812,6 +813,8 @@ export default function Dashboard() {
           </button>
         </LayoutGroup>
       </motion.div>
+
+      {activeTab === "transactions" && <PendingVerifyBanner user={username} />}
 
       {activeTab === "transactions" ? (
         <AnimatePresence mode="popLayout">

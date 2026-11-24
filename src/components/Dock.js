@@ -11,12 +11,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaHome, FaCalendarAlt } from "react-icons/fa";
 import { LuLayoutDashboard } from "react-icons/lu";
+import { FiPieChart } from "react-icons/fi";
 import { MdDragIndicator } from "react-icons/md";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/", icon: FaHome },
   { name: "Dashboard", href: "/dashboard", icon: LuLayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: FaCalendarAlt },
+  {
+    name: "Investments",
+    href: "/investments",
+    icon: FiPieChart,
+    webOnly: true,
+  },
 ];
 
 export default function Dock() {
@@ -28,7 +35,9 @@ export default function Dock() {
   const containerRef = useRef(null);
 
   // Restrict dock to only Dashboard and Calendar pages
-  const isAllowedPath = pathname === "/dashboard" || pathname === "/calendar";
+  const isAllowedPath = ["/dashboard", "/calendar", "/investments"].includes(
+    pathname,
+  );
 
   // THE FIX: Use explicit motion values so we can manually reset them to 0
   // after each snap. Without this, Framer retains the drag offset and the dock
@@ -170,7 +179,7 @@ export default function Dock() {
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 aria-label={item.name}
-                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+                className={`focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl ${item.webOnly ? "hidden md:flex" : ""}`}
               >
                 <motion.div
                   whileHover={{
