@@ -30,7 +30,7 @@ async function updatePending({ user, transaction, action, category }) {
     body: JSON.stringify(
       action === "approve"
         ? { id: transaction._id, user, status: "verified", category }
-        : { id: transaction._id, user },
+        : { id: transaction._id, user, pendingOnly: true },
     ),
   });
   if (!response.ok)

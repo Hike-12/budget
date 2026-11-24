@@ -140,6 +140,29 @@ export async function POST(req) {
       ...(linkedInvestmentId ? { linkedInvestmentId } : {}),
     };
 
+    // Capture retries may arrive after the transaction has been reviewed.
+    if (source === "sms_auto" && clientId) {
+      try {
+        const budget = await Budget.findOneAndUpdate(
+          { user, clientId },
+          { $setOnInsert: { ...budgetFields, clientId } },
+          { upsert: true, new: true, runValidators: true },
+        ).lean();
+        return Response.json(budget, { headers: corsHeaders });
+      } catch (error) {
+        if (error?.code !== 11000) throw error;
+        const budget = await Budget.findOne({
+          user,
+          $or: [{ clientId }, ...(upiRefId ? [{ upiRefId }] : [])],
+        }).lean();
+        if (!budget) throw error;
+        return Response.json(
+          { deduplicated: true, budget },
+          { headers: corsHeaders },
+        );
+      }
+    }
+
     // Upsert by (user, clientId) with database-level LWW guard.
     if (clientId) {
       let doc;
@@ -260,7 +283,10 @@ export async function PATCH(req) {
       ? { _id: { $in: ids }, user: userRegex }
       : { _id: id, user: userRegex };
     if (ids?.length) {
-      const result = await Budget.updateMany(target, { $set: updates });
+      const result = await Budget.updateMany(
+        { ...target, status: "pending" },
+        { $set: updates },
+      );
       const budgets = await Budget.find(target).lean();
       return Response.json(
         { success: true, modifiedCount: result.modifiedCount, budgets },
@@ -268,16 +294,19 @@ export async function PATCH(req) {
       );
     }
     const verified = await Budget.findOneAndUpdate(
-      target,
+      { ...target, status: "pending" },
       { $set: updates },
       { new: true },
     ).lean();
-    if (!verified)
+    const budget =
+      verified ||
+      (await Budget.findOne({ ...target, status: "verified" }).lean());
+    if (!budget)
       return Response.json(
         { error: "Not found" },
         { status: 404, headers: corsHeaders },
       );
-    return Response.json(verified, { headers: corsHeaders });
+    return Response.json(budget, { headers: corsHeaders });
   }
 
   const query = id
@@ -325,7 +354,7 @@ export async function PATCH(req) {
 export async function DELETE(req) {
   const corsHeaders = getCorsHeaders(req);
   await connectToDB();
-  const { id, clientId, user: rawUser } = await req.json();
+  const { id, clientId, user: rawUser, pendingOnly } = await req.json();
   const user = normalizeUser(rawUser);
   if (!user)
     return Response.json(
@@ -335,6 +364,20 @@ export async function DELETE(req) {
 
   let budget = null;
   const userRegex = { $regex: new RegExp(`^${user}$`, "i") };
+
+  if (pendingOnly === true) {
+    const dismissed =
+      /^[a-f\d]{24}$/i.test(id || "") &&
+      (await Budget.findOneAndDelete({
+        _id: id,
+        user: userRegex,
+        status: "pending",
+      }));
+    return Response.json(
+      { success: true, dismissed: Boolean(dismissed) },
+      { headers: corsHeaders },
+    );
+  }
 
   if (id) {
     budget = await Budget.findOne({ _id: id, user: userRegex });
