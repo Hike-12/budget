@@ -14,6 +14,12 @@ const BudgetPayloadSchema = z.object({
   updatedAt: z.union([z.string(), z.date(), z.number()]).optional().nullable(),
   user: z.string().min(1, "User is required"),
   clientId: z.string().optional().nullable(),
+  status: z.enum(["verified", "pending"]).optional(),
+  source: z.enum(["manual", "sms_auto", "investment_bridge"]).optional(),
+  upiRefId: z.string().optional().nullable(),
+  rawSmsSnippet: z.string().optional().nullable(),
+  linkedInvestmentId: z.string().optional().nullable(),
+  date: z.union([z.string(), z.date(), z.number()]).optional().nullable(),
 });
 
 function normalizeUser(user) {
@@ -39,11 +45,17 @@ export async function GET(req) {
       { status: 400, headers: corsHeaders },
     );
 
-  const data = await Budget.find({
-    user: { $regex: new RegExp(`^${user}$`, "i") },
-  })
-    .sort({ createdAt: -1 })
-    .lean();
+  const status = searchParams.get("status");
+  const statusFilter =
+    status === "pending"
+      ? "pending"
+      : status === "all"
+        ? null
+        : { $ne: "pending" };
+  const query = { user: { $regex: new RegExp(`^${user}$`, "i") } };
+  if (statusFilter) query.status = statusFilter;
+
+  const data = await Budget.find(query).sort({ createdAt: -1 }).lean();
 
   return Response.json(data, { headers: corsHeaders });
 }
@@ -80,6 +92,12 @@ export async function POST(req) {
       updatedAt,
       user: rawUser,
       clientId,
+      status: requestedStatus,
+      source: requestedSource,
+      upiRefId,
+      rawSmsSnippet,
+      linkedInvestmentId,
+      date,
     } = result.data;
 
     const user = normalizeUser(rawUser);
@@ -92,6 +110,35 @@ export async function POST(req) {
 
     const createdAtDate = normalizeDate(createdAt);
     const updatedAtDate = normalizeDate(updatedAt, createdAtDate);
+    const source = requestedSource || "manual";
+    const status =
+      requestedStatus || (source === "sms_auto" ? "pending" : "verified");
+
+    if (upiRefId) {
+      const existing = await Budget.findOne({ upiRefId, user }).lean();
+      if (existing) {
+        return Response.json(
+          { deduplicated: true, budget: existing },
+          { status: 200, headers: corsHeaders },
+        );
+      }
+    }
+
+    const budgetFields = {
+      title,
+      amount,
+      type,
+      note,
+      category,
+      createdAt: normalizeDate(date, createdAtDate),
+      updatedAt: updatedAtDate,
+      user,
+      status,
+      source,
+      ...(upiRefId ? { upiRefId } : {}),
+      ...(rawSmsSnippet ? { rawSmsSnippet } : {}),
+      ...(linkedInvestmentId ? { linkedInvestmentId } : {}),
+    };
 
     // Upsert by (user, clientId) with database-level LWW guard.
     if (clientId) {
@@ -108,14 +155,7 @@ export async function POST(req) {
           },
           {
             $set: {
-              title,
-              amount,
-              type,
-              note,
-              category,
-              createdAt: createdAtDate,
-              updatedAt: updatedAtDate,
-              user,
+              ...budgetFields,
               clientId,
             },
           },
@@ -143,17 +183,21 @@ export async function POST(req) {
     }
 
     // Fallback (no clientId): create normally
-    const doc = await Budget.create({
-      title,
-      amount,
-      type,
-      note,
-      category,
-      createdAt: createdAtDate,
-      updatedAt: updatedAtDate,
-      user,
-    });
-    return Response.json(doc, { headers: corsHeaders });
+    try {
+      const doc = await Budget.create(budgetFields);
+      return Response.json(doc, { headers: corsHeaders });
+    } catch (error) {
+      if (error?.code === 11000 && upiRefId) {
+        const existing = await Budget.findOne({ upiRefId, user }).lean();
+        if (existing) {
+          return Response.json(
+            { deduplicated: true, budget: existing },
+            { status: 200, headers: corsHeaders },
+          );
+        }
+      }
+      throw error;
+    }
   } catch (error) {
     console.error("POST /api/budgets failed:", error);
     return Response.json(
@@ -177,7 +221,7 @@ export async function PATCH(req) {
     );
   }
 
-  const { id, clientId, user: rawUser, ...rest } = body;
+  const { id, ids, clientId, user: rawUser, ...rest } = body;
 
   // Validate the updates
   const patchResult = BudgetPayloadSchema.partial().safeParse(rest);
@@ -196,6 +240,46 @@ export async function PATCH(req) {
     );
 
   const userRegex = { $regex: new RegExp(`^${user}$`, "i") };
+  if (
+    rest.status === "verified" &&
+    (id || (Array.isArray(ids) && ids.length))
+  ) {
+    const updates = {};
+    for (const key of ["title", "category", "amount", "type", "note"]) {
+      if (patchResult.data[key] !== undefined)
+        updates[key] = patchResult.data[key];
+    }
+    if (patchResult.data.date || patchResult.data.createdAt) {
+      updates.createdAt = normalizeDate(
+        patchResult.data.date || patchResult.data.createdAt,
+      );
+    }
+    updates.status = "verified";
+    updates.updatedAt = new Date();
+    const target = ids?.length
+      ? { _id: { $in: ids }, user: userRegex }
+      : { _id: id, user: userRegex };
+    if (ids?.length) {
+      const result = await Budget.updateMany(target, { $set: updates });
+      const budgets = await Budget.find(target).lean();
+      return Response.json(
+        { success: true, modifiedCount: result.modifiedCount, budgets },
+        { headers: corsHeaders },
+      );
+    }
+    const verified = await Budget.findOneAndUpdate(
+      target,
+      { $set: updates },
+      { new: true },
+    ).lean();
+    if (!verified)
+      return Response.json(
+        { error: "Not found" },
+        { status: 404, headers: corsHeaders },
+      );
+    return Response.json(verified, { headers: corsHeaders });
+  }
+
   const query = id
     ? { _id: id, user: userRegex }
     : clientId
@@ -208,7 +292,9 @@ export async function PATCH(req) {
     );
 
   const update = { ...patchResult.data };
-  if (update.createdAt) update.createdAt = normalizeDate(update.createdAt);
+  if (update.date || update.createdAt)
+    update.createdAt = normalizeDate(update.date || update.createdAt);
+  delete update.date;
 
   const incomingUpdatedAt = normalizeDate(update.updatedAt);
   update.updatedAt = incomingUpdatedAt;

@@ -13,6 +13,13 @@ const BudgetSchema = new mongoose.Schema({
       "religion",
       "personal",
       "miscellaneous",
+      "Food",
+      "Travel",
+      "Shopping",
+      "Bills",
+      "Entertainment",
+      "Other",
+      "Investment",
     ],
     default: "miscellaneous",
   },
@@ -21,6 +28,18 @@ const BudgetSchema = new mongoose.Schema({
   user: String,
   // stable client-generated id for offline-first dedup
   clientId: { type: String, default: null },
+  status: { type: String, enum: ["verified", "pending"], default: "verified" },
+  source: {
+    type: String,
+    enum: ["manual", "sms_auto", "investment_bridge"],
+    default: "manual",
+  },
+  upiRefId: { type: String, sparse: true },
+  rawSmsSnippet: String,
+  linkedInvestmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Investment",
+  },
 });
 
 // Atomic dedup: only one document per (user, clientId) when clientId is set.
@@ -33,5 +52,12 @@ BudgetSchema.index(
   },
 );
 BudgetSchema.index({ user: 1, createdAt: -1 });
+BudgetSchema.index(
+  { user: 1, upiRefId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { upiRefId: { $type: "string" } },
+  },
+);
 
 export default mongoose.models.Budget || mongoose.model("Budget", BudgetSchema);
