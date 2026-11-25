@@ -36,7 +36,11 @@ export default function LoginPage() {
   useEffect(() => {
     router.prefetch("/dashboard");
     const storedUser = localStorage.getItem("username");
-    if (storedUser) router.replace("/dashboard");
+    if (
+      storedUser &&
+      !new URLSearchParams(window.location.search).has("reauth")
+    )
+      router.replace("/dashboard");
   }, [router]);
 
   async function handleTestCredentialsLogin() {

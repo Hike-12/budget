@@ -2,6 +2,7 @@ import { connectToDB } from "@/lib/mongodb";
 import User from "@/lib/User";
 import bcrypt from "bcryptjs";
 import { getCorsHeaders } from "@/lib/cors";
+import { startAccountSession } from "@/lib/accountSession";
 import { z } from "zod";
 
 const signupSchema = z.object({
@@ -20,7 +21,7 @@ export async function POST(req) {
       return Response.json(
         {
           success: false,
-          message: parsedData.error.errors[0].message,
+          message: parsedData.error.issues[0].message,
         },
         { status: 400, headers: corsHeaders },
       );
@@ -47,10 +48,7 @@ export async function POST(req) {
       password: hashedPassword,
     });
 
-    return Response.json(
-      { success: true, username: newUser.username },
-      { status: 201, headers: corsHeaders },
-    );
+    return await startAccountSession(newUser.username, corsHeaders, 201);
   } catch (error) {
     console.error("Signup error:", error);
     return Response.json(

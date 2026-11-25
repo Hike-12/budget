@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { toast } from "@/components/sonner";
 
 export default function Navbar() {
   const router = useRouter();
@@ -25,8 +26,15 @@ export default function Navbar() {
   }, [router]);
 
   const handleAction = () => {
-    startTransition(() => {
+    startTransition(async () => {
       if (username) {
+        const signedOut = await fetch("/api/login", { method: "DELETE" })
+          .then((res) => res.ok)
+          .catch(() => false);
+        if (!signedOut) {
+          toast.error("Could not sign out. Try again.");
+          return;
+        }
         localStorage.removeItem("username");
         window.dispatchEvent(new Event("auth-change"));
         setUsername(null);

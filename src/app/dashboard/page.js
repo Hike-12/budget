@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import {
   useState,
   useMemo,
@@ -29,6 +30,8 @@ import {
   FiGrid,
   FiEye,
   FiEyeOff,
+  FiSettings,
+  FiZap,
 } from "react-icons/fi";
 import { LuLayoutGrid, LuGrid2X2, LuGrid3X3 } from "react-icons/lu";
 
@@ -851,16 +854,31 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Add button */}
-              <button
-                id="add-transaction-btn"
-                onClick={() => openForm()}
-                className="flex flex-[0_0_auto] items-center justify-center gap-2 px-4 py-3 sm:py-2.5 w-full sm:w-auto bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-95"
-                aria-label="Add new transaction"
-              >
-                <FiPlus strokeWidth={2.5} className="text-sm" />
-                Add
-              </button>
+              <div className="flex shrink-0 items-stretch gap-2">
+                <Link
+                  href="/settings"
+                  aria-label="Settings"
+                  title="Settings"
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/10 text-secondary hover:text-accent focus-visible:outline-2 focus-visible:outline-secondary"
+                >
+                  <FiSettings />
+                </Link>
+                <Link
+                  href="/quick-transactions"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/10 px-3 text-sm font-semibold text-accent hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-secondary"
+                >
+                  <FiZap aria-hidden /> Quick add
+                </Link>
+                <button
+                  id="add-transaction-btn"
+                  onClick={() => openForm()}
+                  className="flex min-h-11 grow items-center justify-center gap-2 px-4 py-2.5 bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-95 focus-visible:outline-2 focus-visible:outline-secondary"
+                  aria-label="Add new transaction"
+                >
+                  <FiPlus strokeWidth={2.5} className="text-sm" />
+                  Add
+                </button>
+              </div>
             </div>
 
             {/* Section header with grid selector */}

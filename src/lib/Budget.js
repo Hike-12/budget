@@ -33,7 +33,7 @@ const BudgetSchema = new mongoose.Schema({
   status: { type: String, enum: ["verified", "pending"], default: "verified" },
   source: {
     type: String,
-    enum: ["manual", "sms_auto", "investment_bridge"],
+    enum: ["manual", "sms_auto", "investment_bridge", "quick", "recurring"],
     default: "manual",
   },
   upiRefId: { type: String, sparse: true },

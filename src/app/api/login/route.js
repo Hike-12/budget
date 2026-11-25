@@ -2,6 +2,7 @@ import { connectToDB } from "@/lib/mongodb";
 import User from "@/lib/User";
 import bcrypt from "bcryptjs";
 import { getCorsHeaders } from "@/lib/cors";
+import { endAccountSession, startAccountSession } from "@/lib/accountSession";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -20,7 +21,7 @@ export async function POST(req) {
       return Response.json(
         {
           success: false,
-          message: parsedData.error.errors[0].message,
+          message: parsedData.error.issues[0].message,
         },
         { status: 400, headers: corsHeaders },
       );
@@ -66,10 +67,7 @@ export async function POST(req) {
           username: normalizedUsername,
           password: hashedPassword,
         });
-        return Response.json(
-          { success: true, username: normalizedUsername },
-          { headers: corsHeaders },
-        );
+        return await startAccountSession(normalizedUsername, corsHeaders);
       }
 
       return Response.json(
@@ -81,10 +79,7 @@ export async function POST(req) {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
-      return Response.json(
-        { success: true, username: user.username },
-        { headers: corsHeaders },
-      );
+      return await startAccountSession(user.username, corsHeaders);
     } else {
       return Response.json(
         { success: false, message: "Invalid password" },
@@ -98,6 +93,10 @@ export async function POST(req) {
       { status: 500, headers: corsHeaders },
     );
   }
+}
+
+export async function DELETE(req) {
+  return endAccountSession(req, getCorsHeaders(req));
 }
 
 export async function OPTIONS(req) {

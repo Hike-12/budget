@@ -2,6 +2,8 @@ import { connectToDB } from "@/lib/mongodb";
 import Budget from "@/lib/Budget";
 import TrashBudget from "@/lib/TrashBudget";
 import { getCorsHeaders } from "@/lib/cors";
+import { accountForRequest } from "@/lib/accountSession";
+import { postDueTransactions } from "@/lib/recurringTransactions";
 import { z } from "zod";
 
 const BudgetPayloadSchema = z.object({
@@ -46,6 +48,13 @@ export async function GET(req) {
     );
 
   const status = searchParams.get("status");
+  if (status !== "pending" && (await accountForRequest(req)) === user) {
+    try {
+      await postDueTransactions(user);
+    } catch (error) {
+      console.error("Could not post due transactions", error.name, error.code);
+    }
+  }
   const statusFilter =
     status === "pending"
       ? "pending"
