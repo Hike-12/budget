@@ -66,7 +66,9 @@ export async function GET(req) {
 
   const data = await Budget.find(query).sort({ createdAt: -1 }).lean();
 
-  return Response.json(data, { headers: corsHeaders });
+  return Response.json(data, {
+    headers: { ...corsHeaders, "Cache-Control": "no-store" },
+  });
 }
 
 export async function POST(req) {
