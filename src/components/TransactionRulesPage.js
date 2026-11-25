@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { MAIN_TRANSACTION_CATEGORIES } from "@/lib/transactionCategories";
 import Link from "next/link";
 import { FiArrowLeft, FiCalendar, FiPlus, FiZap } from "react-icons/fi";
 
@@ -15,21 +16,6 @@ const days = [
   "Saturday",
 ];
 const order = [1, 2, 3, 4, 5, 6, 0];
-const categories = [
-  "miscellaneous",
-  "personal",
-  "Transport",
-  "Food",
-  "Travel",
-  "Shopping",
-  "Bills",
-  "Entertainment",
-  "Health",
-  "school friends",
-  "college friends",
-  "religion",
-  "Other",
-];
 const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -133,7 +119,12 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
             value={form.category}
             onChange={(e) => change("category", e.target.value)}
           >
-            {categories.map((category) => (
+            {!MAIN_TRANSACTION_CATEGORIES.includes(form.category) && (
+              <option value={form.category} disabled>
+                {form.category}
+              </option>
+            )}
+            {MAIN_TRANSACTION_CATEGORIES.map((category) => (
               <option key={category}>{category}</option>
             ))}
           </select>

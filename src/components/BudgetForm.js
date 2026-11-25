@@ -11,15 +11,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import CustomSelect from "@/components/CustomSelect";
 import CustomDatePicker from "@/components/CustomDatePicker";
+import { MAIN_TRANSACTION_CATEGORIES } from "@/lib/transactionCategories";
 
-const categories = [
-  "school friends",
-  "college friends",
-  "religion",
-  "personal",
-  "miscellaneous",
-  "Investment",
-];
+const categories = [...MAIN_TRANSACTION_CATEGORIES, "Investment"];
 
 const inputCls =
   "w-full bg-[#0e0e0e] border border-white/8 rounded-lg px-4 py-2.5 text-accent text-sm focus:outline-none focus:border-primary/40 transition-all duration-200 placeholder:text-secondary/25";
