@@ -859,20 +859,20 @@ export default function Dashboard() {
                   href="/settings"
                   aria-label="Settings"
                   title="Settings"
-                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/10 text-secondary hover:text-accent focus-visible:outline-2 focus-visible:outline-secondary"
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/10 text-[var(--color-secondary)] hover:text-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)]"
                 >
                   <FiSettings />
                 </Link>
                 <Link
                   href="/quick-transactions"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/10 px-3 text-sm font-semibold text-accent hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-secondary"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/10 px-3 text-sm font-semibold text-[var(--color-accent)] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)]"
                 >
                   <FiZap aria-hidden /> Quick add
                 </Link>
                 <button
                   id="add-transaction-btn"
                   onClick={() => openForm()}
-                  className="flex min-h-11 grow items-center justify-center gap-2 px-4 py-2.5 bg-primary text-dark text-sm font-bold rounded-lg hover:bg-secondary transition-all duration-200 active:scale-95 focus-visible:outline-2 focus-visible:outline-secondary"
+                  className="flex min-h-11 grow items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-[var(--color-dark)] transition-colors hover:bg-[var(--color-secondary)] focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)]"
                   aria-label="Add new transaction"
                 >
                   <FiPlus strokeWidth={2.5} className="text-sm" />

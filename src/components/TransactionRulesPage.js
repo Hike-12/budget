@@ -42,11 +42,11 @@ const dateLabel = new Intl.DateTimeFormat("en-IN", {
 });
 const card = "rounded-2xl border border-white/10 bg-[#101010]";
 const primary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-dark hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-[var(--color-dark)] hover:bg-[var(--color-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary)] disabled:opacity-50";
 const secondary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-accent hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-secondary disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-[var(--color-accent)] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)] disabled:opacity-50";
 const field =
-  "w-full rounded-lg border border-white/15 bg-[#0e0e0e] px-3 py-2.5 text-accent focus-visible:outline-2 focus-visible:outline-secondary";
+  "w-full rounded-lg border border-white/15 bg-[#0e0e0e] px-3 py-2.5 text-[var(--color-accent)] [color-scheme:dark] focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)]";
 
 async function request(kind, body, signal) {
   const response = await fetch(`/api/transaction-rules?kind=${kind}`, {
@@ -86,8 +86,8 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
   }
   return (
     <form onSubmit={submit} className={`${card} space-y-5 p-4 sm:p-6`}>
-      <div className="grid gap-4 sm:grid-cols-[1fr_9rem]">
-        <label className="grid gap-2 text-sm font-semibold text-accent">
+      <div className="grid gap-4 min-[360px]:grid-cols-[minmax(0,1fr)_7rem] sm:grid-cols-[minmax(0,1fr)_9rem]">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
           Name
           <input
             className={field}
@@ -99,7 +99,7 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
             onChange={(e) => change("title", e.target.value)}
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-accent">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
           Amount (₹)
           <input
             className={field}
@@ -114,8 +114,8 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
           />
         </label>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-accent">
+      <div className="grid gap-4 min-[360px]:grid-cols-2">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
           Type
           <select
             className={field}
@@ -126,7 +126,7 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
             <option value="income">Income</option>
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-accent">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
           Category
           <select
             className={`${field} capitalize`}
@@ -142,7 +142,7 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
       {recurring && (
         <>
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-accent">
+            <legend className="mb-2 text-sm font-semibold text-[var(--color-accent)]">
               Repeat on
             </legend>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
@@ -154,7 +154,7 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
                     type="button"
                     aria-label={days[day]}
                     aria-pressed={selected}
-                    className={`min-h-11 rounded-lg border text-sm font-semibold focus-visible:outline-2 focus-visible:outline-secondary ${selected ? "border-primary bg-primary/25 text-accent" : "border-white/10 text-secondary hover:bg-white/5"}`}
+                    className={`min-h-11 rounded-lg border text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)] ${selected ? "border-[var(--color-primary)] bg-[#25384b] text-[var(--color-accent)]" : "border-white/10 text-[var(--color-secondary)] hover:bg-white/5"}`}
                     onClick={() =>
                       change(
                         "weekdays",
@@ -170,7 +170,7 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
               })}
             </div>
           </fieldset>
-          <label className="grid gap-2 text-sm font-semibold text-accent sm:max-w-xs">
+          <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)] sm:max-w-xs">
             Start date
             <input
               className={field}
@@ -184,7 +184,7 @@ function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
           </label>
         </>
       )}
-      <label className="grid gap-2 text-sm font-semibold text-accent">
+      <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
         Note <span className="sr-only">(optional)</span>
         <textarea
           rows={2}
@@ -291,19 +291,19 @@ export default function TransactionRulesPage({ kind }) {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 pb-28 pt-28 sm:px-8">
+    <div className="mx-auto min-h-screen w-full max-w-3xl px-4 pb-28 pt-28 sm:px-8">
       <Link
         href={recurring ? "/settings" : "/dashboard"}
-        className="mb-6 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-secondary hover:text-accent"
+        className="mb-6 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-[var(--color-secondary)] hover:text-[var(--color-accent)]"
       >
         <FiArrowLeft /> {recurring ? "Settings" : "Dashboard"}
       </Link>
       <header className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-grotesk text-3xl font-bold tracking-tight text-accent sm:text-4xl">
+          <h1 className="font-grotesk text-3xl font-bold tracking-tight text-[var(--color-accent)] sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-2 text-sm text-secondary">
+          <p className="mt-2 text-sm text-[var(--color-secondary)]">
             {recurring
               ? "Log transactions automatically on the weekdays you choose. Dates use India time."
               : "Save the details once, then add the transaction in one tap."}
@@ -325,14 +325,16 @@ export default function TransactionRulesPage({ kind }) {
       </header>
       <p
         role="status"
-        className={notice ? "mb-4 text-sm text-secondary" : "sr-only"}
+        className={
+          notice ? "mb-4 text-sm text-[var(--color-secondary)]" : "sr-only"
+        }
       >
         {notice}
       </p>
       {error && (
         <div
           role="alert"
-          className={`${card} mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-accent`}
+          className={`${card} mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-[var(--color-accent)]`}
         >
           <span>
             {error.status === 401
@@ -359,7 +361,7 @@ export default function TransactionRulesPage({ kind }) {
         </div>
       )}
       {!data && !error && (
-        <p role="status" className="text-sm text-secondary">
+        <p role="status" className="text-sm text-[var(--color-secondary)]">
           Loading…
         </p>
       )}
@@ -381,8 +383,8 @@ export default function TransactionRulesPage({ kind }) {
         <section
           className={`${card} flex flex-col items-start gap-3 p-6 sm:p-8`}
         >
-          <Icon className="size-6 text-secondary" aria-hidden />
-          <h2 className="text-lg font-semibold text-accent">
+          <Icon className="size-6 text-[var(--color-secondary)]" aria-hidden />
+          <h2 className="text-lg font-semibold text-[var(--color-accent)]">
             {recurring ? "No schedules yet" : "No quick transactions yet"}
           </h2>
           <button className={primary} onClick={() => setEditor({})}>
@@ -397,21 +399,21 @@ export default function TransactionRulesPage({ kind }) {
             <li key={rule._id} className={`${card} space-y-3 p-4 sm:p-5`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="break-words text-lg font-semibold text-accent">
+                  <h2 className="break-words text-lg font-semibold text-[var(--color-accent)]">
                     {rule.title}
                   </h2>
-                  <p className="mt-1 text-sm capitalize text-secondary">
+                  <p className="mt-1 text-sm capitalize text-[var(--color-secondary)]">
                     {rule.category} · {rule.type}
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 tabular-nums font-semibold ${rule.type === "income" ? "text-emerald-400" : "text-accent"}`}
+                  className={`shrink-0 tabular-nums font-semibold ${rule.type === "income" ? "text-emerald-400" : "text-[var(--color-accent)]"}`}
                 >
                   {money.format(rule.amount)}
                 </span>
               </div>
               {recurring && (
-                <div className="text-sm text-secondary">
+                <div className="text-sm text-[var(--color-secondary)]">
                   {rule.weekdays.length === 7
                     ? "Every day"
                     : order
@@ -426,7 +428,7 @@ export default function TransactionRulesPage({ kind }) {
                 </div>
               )}
               {remove === rule._id ? (
-                <div className="flex flex-wrap items-center gap-2 text-sm text-accent">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-accent)]">
                   <span>
                     Remove this {recurring ? "schedule" : "quick transaction"}?
                   </span>
@@ -511,6 +513,6 @@ export default function TransactionRulesPage({ kind }) {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }
