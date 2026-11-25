@@ -50,7 +50,7 @@ async function request(kind, body, signal) {
 export default function TransactionRulesPage({ kind }) {
   const recurring = kind === "recurring";
   const title = recurring ? "Recurring transactions" : "Quick transactions";
-  const newLabel = recurring ? "New schedule" : "New quick transaction";
+  const newLabel = recurring ? "New transaction" : "New quick transaction";
   const Icon = recurring ? FiCalendar : FiZap;
   const [data, setData] = useState(null);
   const [editor, setEditor] = useState(null);

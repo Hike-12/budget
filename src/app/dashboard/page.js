@@ -876,7 +876,7 @@ export default function Dashboard() {
                   aria-label="Add new transaction"
                 >
                   <FiPlus strokeWidth={2.5} className="text-sm" />
-                  Add
+                  Add Transaction
                 </button>
               </div>
             </div>
