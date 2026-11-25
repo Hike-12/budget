@@ -65,10 +65,10 @@ export default function HomePageClient() {
           className="flex w-full max-w-md sm:max-w-none flex-col sm:flex-row gap-3 sm:gap-4 mb-2 sm:mb-4"
         >
           <a
-            href="https://drive.google.com/drive/folders/1DR3EmfC-2j6YATuUB9t85dJ1KgdU3R3M?usp=sharing"
+            href="https://github.com/Hike-12/budget-mobile/releases/latest"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Install Budgetly app APK"
+            aria-label="Install Budgetly for Android from GitHub"
             className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent/70 text-accent px-6 sm:px-8 py-3 rounded-md font-bold text-base sm:text-lg hover:bg-accent/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             Install App
