@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FiChevronDown, FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX } from "react-icons/fi";
+import CustomSelect from "@/components/CustomSelect";
+import CustomDatePicker from "@/components/CustomDatePicker";
+import { nextDay } from "@/lib/transactionDates.mjs";
 import {
   FREQUENCIES,
   formatPaymentDate,
@@ -42,31 +45,25 @@ function Field({ label, children, className = "" }) {
   );
 }
 
-function Select({ value, options, onChange, placeholder }) {
+function Select({
+  value,
+  options,
+  onChange,
+  placeholder,
+  "aria-label": label,
+}) {
   return (
-    <span className="relative block">
-      <select
-        required
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={`${inputClass} appearance-none pr-9 scheme-dark`}
-      >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-        {Object.entries(options).map(([key, label]) => (
-          <option key={key} value={key}>
-            {label}
-          </option>
-        ))}
-      </select>
-      <FiChevronDown
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/55"
-      />
-    </span>
+    <CustomSelect
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      aria-label={label}
+      buttonClassName="min-h-11"
+      options={Object.entries(options).map(([value, label]) => ({
+        value,
+        label,
+      }))}
+    />
   );
 }
 
@@ -254,6 +251,10 @@ export default function InvestmentModal({
   function submit(event) {
     event.preventDefault();
     setError("");
+    if (!assetType || !purchaseDate || purchaseDate > dateInput()) {
+      setError("Choose an asset type and a valid purchase date.");
+      return;
+    }
     const numbers = [form.investedAmount, buyPrice, units].map(Number);
     const override =
       form.manualCurrentValue === "" ? null : Number(form.manualCurrentValue);
@@ -387,6 +388,7 @@ export default function InvestmentModal({
                   }
                 >
                   <Select
+                    aria-label="Asset type"
                     value={assetType}
                     options={ASSET_TYPES}
                     placeholder="Choose asset type"
@@ -475,13 +477,12 @@ export default function InvestmentModal({
                 />
               </Field>
               <Field label="Purchase date">
-                <input
-                  required
-                  type="date"
+                <CustomDatePicker
+                  aria-label="Purchase date"
+                  buttonClassName="min-h-11"
                   max={dateInput()}
                   value={purchaseDate}
-                  onChange={(event) => {
-                    const value = event.target.value;
+                  onChange={(value) => {
                     setForm((current) => ({
                       ...current,
                       purchaseDate: value,
@@ -490,7 +491,6 @@ export default function InvestmentModal({
                     }));
                     setQuoteEnabled(true);
                   }}
-                  className={`${inputClass} scheme-dark`}
                 />
               </Field>
               <Field label="Price per unit (₹)">
@@ -599,20 +599,19 @@ export default function InvestmentModal({
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Field label="Repeat">
                       <Select
+                        aria-label="Repeat"
                         value={form.frequency}
                         options={FREQUENCIES}
                         onChange={(value) => set("frequency", value)}
                       />
                     </Field>
                     <Field label="Next payment">
-                      <input
-                        required
-                        type="date"
+                      <CustomDatePicker
+                        aria-label="Next payment"
+                        buttonClassName="min-h-11"
+                        min={purchaseDate ? nextDay(purchaseDate) : undefined}
                         value={nextDate}
-                        onChange={(event) =>
-                          set("nextDate", event.target.value)
-                        }
-                        className={`${inputClass} scheme-dark`}
+                        onChange={(value) => set("nextDate", value)}
                       />
                     </Field>
                     <Field label="Amount per payment (₹)">

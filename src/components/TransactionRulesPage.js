@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { MAIN_TRANSACTION_CATEGORIES } from "@/lib/transactionCategories";
+import TransactionFormDialog from "@/components/TransactionFormDialog";
 import Link from "next/link";
 import { FiArrowLeft, FiCalendar, FiPlus, FiZap } from "react-icons/fi";
 
@@ -31,8 +31,6 @@ const primary =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-[var(--color-dark)] hover:bg-[var(--color-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary)] disabled:opacity-50";
 const secondary =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-[var(--color-accent)] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)] disabled:opacity-50";
-const field =
-  "w-full rounded-lg border border-white/15 bg-[#0e0e0e] px-3 py-2.5 text-[var(--color-accent)] [color-scheme:dark] focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)]";
 
 async function request(kind, body, signal) {
   const response = await fetch(`/api/transaction-rules?kind=${kind}`, {
@@ -47,166 +45,6 @@ async function request(kind, body, signal) {
   if (!response.ok)
     throw Object.assign(new Error(data.error), { status: response.status });
   return data;
-}
-
-function RuleEditor({ initial, kind, today, onCancel, onSave, busy }) {
-  const recurring = kind === "recurring";
-  const [form, setForm] = useState(() =>
-    initial
-      ? { ...initial, amount: String(initial.amount) }
-      : {
-          title: "",
-          amount: "",
-          type: "expense",
-          category: "miscellaneous",
-          note: "",
-          ...(recurring && { weekdays: [], startDate: today, paused: false }),
-        },
-  );
-  const change = (key, value) =>
-    setForm((current) => ({ ...current, [key]: value }));
-  function submit(event) {
-    event.preventDefault();
-    if (!form.title.trim() || (recurring && !form.weekdays.length)) return;
-    onSave({ ...form, kind, amount: Number(form.amount) });
-  }
-  return (
-    <form onSubmit={submit} className={`${card} space-y-5 p-4 sm:p-6`}>
-      <div className="grid gap-4 min-[360px]:grid-cols-[minmax(0,1fr)_7rem] sm:grid-cols-[minmax(0,1fr)_9rem]">
-        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
-          Name
-          <input
-            className={field}
-            autoFocus
-            required
-            maxLength={80}
-            value={form.title}
-            placeholder="Rickshaw"
-            onChange={(e) => change("title", e.target.value)}
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
-          Amount (₹)
-          <input
-            className={field}
-            required
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0.01"
-            max="1000000000"
-            value={form.amount}
-            onChange={(e) => change("amount", e.target.value)}
-          />
-        </label>
-      </div>
-      <div className="grid gap-4 min-[360px]:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
-          Type
-          <select
-            className={field}
-            value={form.type}
-            onChange={(e) => change("type", e.target.value)}
-          >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-          </select>
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
-          Category
-          <select
-            className={`${field} capitalize`}
-            value={form.category}
-            onChange={(e) => change("category", e.target.value)}
-          >
-            {!MAIN_TRANSACTION_CATEGORIES.includes(form.category) && (
-              <option value={form.category} disabled>
-                {form.category}
-              </option>
-            )}
-            {MAIN_TRANSACTION_CATEGORIES.map((category) => (
-              <option key={category}>{category}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      {recurring && (
-        <>
-          <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-[var(--color-accent)]">
-              Repeat on
-            </legend>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-              {order.map((day) => {
-                const selected = form.weekdays.includes(day);
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    aria-label={days[day]}
-                    aria-pressed={selected}
-                    className={`min-h-11 rounded-lg border text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[var(--color-secondary)] ${selected ? "border-[var(--color-primary)] bg-[#25384b] text-[var(--color-accent)]" : "border-white/10 text-[var(--color-secondary)] hover:bg-white/5"}`}
-                    onClick={() =>
-                      change(
-                        "weekdays",
-                        selected
-                          ? form.weekdays.filter((value) => value !== day)
-                          : [...form.weekdays, day],
-                      )
-                    }
-                  >
-                    {days[day].slice(0, 3)}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-          <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)] sm:max-w-xs">
-            Start date
-            <input
-              className={field}
-              required
-              type="date"
-              min={initial?.startDate < today ? initial.startDate : today}
-              max="2100-12-31"
-              value={form.startDate}
-              onChange={(e) => change("startDate", e.target.value)}
-            />
-          </label>
-        </>
-      )}
-      <label className="grid gap-2 text-sm font-semibold text-[var(--color-accent)]">
-        Note <span className="sr-only">(optional)</span>
-        <textarea
-          rows={2}
-          className={field}
-          maxLength={500}
-          placeholder="Optional"
-          value={form.note}
-          onChange={(e) => change("note", e.target.value)}
-        />
-      </label>
-      <div className="flex flex-wrap gap-2">
-        <button
-          className={primary}
-          type="submit"
-          disabled={
-            busy || !form.title.trim() || (recurring && !form.weekdays.length)
-          }
-        >
-          {busy ? "Saving…" : "Save"}
-        </button>
-        <button
-          className={secondary}
-          type="button"
-          onClick={onCancel}
-          disabled={busy}
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
 }
 
 export default function TransactionRulesPage({ kind }) {
@@ -322,7 +160,7 @@ export default function TransactionRulesPage({ kind }) {
       >
         {notice}
       </p>
-      {error && (
+      {error && !editor && (
         <div
           role="alert"
           className={`${card} mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-[var(--color-accent)]`}
@@ -357,20 +195,33 @@ export default function TransactionRulesPage({ kind }) {
         </p>
       )}
       {editor && data && (
-        <RuleEditor
+        <TransactionFormDialog
           key={editor._id || "new"}
-          initial={editor._id ? editor : null}
-          kind={kind}
-          today={data.today}
-          onSave={(rule) => save(rule, editor._id)}
-          busy={Boolean(active)}
-          onCancel={() => {
+          editing={editor._id ? editor : null}
+          setup={{
+            kind,
+            today: data.today,
+            title: editor._id
+              ? recurring
+                ? "Edit schedule"
+                : "Edit quick transaction"
+              : newLabel,
+            submitLabel: editor._id
+              ? "Save changes"
+              : recurring
+                ? "Save schedule"
+                : "Save quick transaction",
+            onSave: (rule) => save(rule, editor._id),
+            busy: Boolean(active),
+            error: error?.message,
+          }}
+          onClose={() => {
             setEditor(null);
             setError(null);
           }}
         />
       )}
-      {!editor && !!data && !data.rules.length && (
+      {!!data && !data.rules.length && (
         <section
           className={`${card} flex flex-col items-start gap-3 p-6 sm:p-8`}
         >
@@ -384,7 +235,7 @@ export default function TransactionRulesPage({ kind }) {
           </button>
         </section>
       )}
-      {!editor && !!data?.rules.length && (
+      {!!data?.rules.length && (
         <ul className="space-y-3">
           {data.rules.map((rule) => (
             <li key={rule._id} className={`${card} space-y-3 p-4 sm:p-5`}>

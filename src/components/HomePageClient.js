@@ -68,10 +68,13 @@ export default function HomePageClient() {
             href="https://github.com/Hike-12/budget-mobile/releases/latest"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Install Budgetly for Android from GitHub"
+            aria-label="Install Budgetly 1.3.2 for Android from GitHub"
             className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent/70 text-accent px-6 sm:px-8 py-3 rounded-md font-bold text-base sm:text-lg hover:bg-accent/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             Install App
+            <span className="text-sm font-medium text-[var(--color-secondary)]">
+              v1.3.2
+            </span>
           </a>
           <Link
             href="/login"

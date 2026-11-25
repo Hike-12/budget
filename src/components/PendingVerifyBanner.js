@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { FiCheck, FiClock, FiX } from "react-icons/fi";
 import { toast } from "@/components/sonner";
+import CustomSelect from "@/components/CustomSelect";
 
 const CATEGORIES = [
   "Food",
@@ -145,24 +146,14 @@ function PendingRow({ transaction, busy, onApprove, onDismiss }) {
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <label
-          className="sr-only"
-          htmlFor={`pending-category-${transaction._id}`}
-        >
-          Category for {transaction.title}
-        </label>
-        <select
-          id={`pending-category-${transaction._id}`}
+        <CustomSelect
+          aria-label={`Category for ${transaction.title}`}
           value={category}
-          onChange={(event) => setCategory(event.target.value)}
-          className="h-9 min-w-32 rounded-lg border border-white/10 bg-[#0e0e0e] px-3 text-xs text-accent"
-        >
-          {CATEGORIES.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+          onChange={setCategory}
+          options={CATEGORIES.map((value) => ({ label: value, value }))}
+          className="min-w-32"
+          buttonClassName="min-h-9 h-9 px-3 text-xs"
+        />
         <button
           type="button"
           disabled={busy}

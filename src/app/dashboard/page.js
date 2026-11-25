@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import BudgetCard from "@/components/BudgetCard";
-import BudgetForm from "@/components/BudgetForm";
+import TransactionFormDialog from "@/components/TransactionFormDialog";
 import PendingVerifyBanner from "@/components/PendingVerifyBanner";
 import TotalBalance from "@/components/TotalBalance";
 import FilterBar from "@/components/FilterBar";
@@ -1100,27 +1100,15 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* ── Add / Edit form modal ── */}
-      <AnimatePresence>
-        {showForm && (
-          <ModalBackdrop onClose={closeForm}>
-            <div className="w-full max-w-[540px] mx-auto relative">
-              <button
-                onClick={closeForm}
-                className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 z-20 w-8 h-8 rounded-lg bg-[#111] border border-white/10 flex items-center justify-center text-secondary/50 hover:text-accent hover:border-white/20 transition-all duration-150 shadow-lg"
-                aria-label="Close form"
-              >
-                <FiX strokeWidth={2} className="text-sm" />
-              </button>
-              <BudgetForm
-                onAdd={(b) => addMutation.mutate(b)}
-                onEdit={(b) => editMutation.mutate(b)}
-                editing={editing}
-                setEditing={setEditing}
-              />
-            </div>
-          </ModalBackdrop>
-        )}
-      </AnimatePresence>
+      {showForm && (
+        <TransactionFormDialog
+          onClose={closeForm}
+          onAdd={(b) => addMutation.mutate(b)}
+          onEdit={(b) => editMutation.mutate(b)}
+          editing={editing}
+          setEditing={setEditing}
+        />
+      )}
     </main>
   );
 }
